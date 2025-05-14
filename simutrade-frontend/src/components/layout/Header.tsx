@@ -14,17 +14,25 @@ import { FiMenu, FiX, FiLogIn, FiUserPlus, FiGrid } from 'react-icons/fi';
 import { FaPaperPlane } from 'react-icons/fa6';
 import gsap from 'gsap';
 
+// This value determines how far the user needs to scroll down
+// before the header starts hiding/showing.
+// Adjust this value based on the actual height of your hero section.
+// For a more dynamic approach, consider getting the hero section's
+// offsetHeight and using that value, or using IntersectionObserver.
+const HERO_SECTION_SCROLL_THRESHOLD = 400; // Example: 400 pixels
+
 type HeaderProps = Record<string, unknown>;
 
 const Header: React.FC<HeaderProps> = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isLoggedIn } = useAuth();
   const headerRef = useRef<HTMLElement>(null);
+  const lastScrollYRef = useRef(0); // To store the last scroll position
 
   useEffect(() => {
     if (headerRef.current) {
       gsap.set(headerRef.current, {
-        y: -100,
+        y: -100, // Initial position off-screen
         opacity: 0,
       });
 
@@ -36,6 +44,50 @@ const Header: React.FC<HeaderProps> = () => {
       });
     }
   }, []);
+
+  // Effect for scroll-based hide/show behavior
+  useEffect(() => {
+    const headerElement = headerRef.current;
+    if (!headerElement) return;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const headerHeight = headerElement.offsetHeight;
+
+      if (currentScrollY > HERO_SECTION_SCROLL_THRESHOLD) {
+        // User has scrolled past the hero section threshold
+        if (
+          currentScrollY > lastScrollYRef.current &&
+          currentScrollY > headerHeight
+        ) {
+          // Scrolling down
+          gsap.to(headerElement, {
+            y: -headerHeight,
+            duration: 0,
+            overwrite: 'auto',
+          });
+        } else if (currentScrollY < lastScrollYRef.current) {
+          // Scrolling up
+          gsap.to(headerElement, { y: 0, duration: 0, overwrite: 'auto' });
+        }
+      } else {
+        // User is within the hero section or scrolled to the top
+        // Ensure header is visible
+        gsap.to(headerElement, { y: 0, duration: 0, overwrite: 'auto' });
+      }
+      // Update last scroll position, ensuring it's not negative
+      lastScrollYRef.current = currentScrollY <= 0 ? 0 : currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      // Optional: If animations are still running when component unmounts,
+      // you might want to kill them to prevent issues.
+      // gsap.killTweensOf(headerElement);
+    };
+  }, []); // Empty dependency array ensures this effect runs only once on mount and cleans up on unmount
 
   return (
     <header

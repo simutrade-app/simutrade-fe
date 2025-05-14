@@ -281,7 +281,7 @@ const HeroSection: React.FC = () => {
     <section
       id="home"
       ref={heroRef}
-      className="hero-section py-12 min-h-screen flex overflow-hidden mt-14 relative"
+      className="hero-section py-12 min-h-screen flex overflow-hidden mt-10 relative"
     >
       {/* Radial gradient background with bottom color transition */}
       <div className="absolute inset-0 pointer-events-none">

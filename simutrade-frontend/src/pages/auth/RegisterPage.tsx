@@ -1,166 +1,489 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+// import { useAuth } from '@/contexts/AuthContext';
+import { FcGoogle } from 'react-icons/fc';
+import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
+import loginImg from '@/assets/images/login-img.jpg';
+import { useToast } from '@/hooks/use-toast';
+
+const registerSchema = z
+  .object({
+    email: z.string().email({ message: 'Invalid email address.' }),
+    password: z
+      .string()
+      .min(8, { message: 'Password must be at least 8 characters.' }),
+    confirmPassword: z
+      .string()
+      .min(1, { message: 'Please confirm your password.' }),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message: 'You must accept the terms and conditions.',
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
+interface VerificationResponse {
+  status: string;
+  message: string;
+  data: {
+    verificationCheck?: string;
+    email?: string;
+    isVerified?: boolean;
+  };
+}
 
 const RegisterPage: React.FC = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
   const navigate = useNavigate();
+  // const { register } = useAuth();  // Commented out until implemented in AuthContext
+  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  const [verificationLink, setVerificationLink] = useState<string | null>(null);
+  const [passwordTouched, setPasswordTouched] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      acceptTerms: false,
+    },
+    mode: 'onChange',
+  });
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+  // Watch password and confirmPassword fields
+  const password = form.watch('password');
+  const confirmPassword = form.watch('confirmPassword');
+
+  // Check if passwords match
+  useEffect(() => {
+    if (confirmPassword) {
+      setPasswordsMatch(password === confirmPassword);
+    } else {
+      setPasswordsMatch(null);
+    }
+
+    if (password && !passwordTouched) {
+      setPasswordTouched(true);
+    }
+  }, [password, confirmPassword, passwordTouched]);
+
+  // Poll for verification status if we have a link
+  useEffect(() => {
+    if (!verificationLink || emailVerified) return;
+
+    const checkInterval = setInterval(async () => {
+      try {
+        // Extract the token from the verification link
+        const url = new URL(verificationLink);
+        const token = url.searchParams.get('token');
+
+        if (!token) return;
+
+        // Check verification status
+        const response = await fetch(
+          'https://api.simutrade.app/user/auth/email/verify-status',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token }),
+          }
+        );
+
+        const data: VerificationResponse = await response.json();
+
+        if (data.status === 'success' && data.data.isVerified) {
+          setEmailVerified(true);
+          setVerifyingEmail(false);
+          clearInterval(checkInterval);
+
+          toast({
+            title: 'Email Verified',
+            description: 'Your email has been successfully verified.',
+            variant: 'success',
+          });
+        }
+      } catch (error) {
+        console.error('Error checking verification status:', error);
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(checkInterval);
+  }, [verificationLink, emailVerified, toast]);
+
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+      if (!emailVerified) {
+        toast({
+          title: 'Verification Required',
+          description: 'Please verify your email first',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('Register data:', data);
+      // Uncomment when register is implemented in AuthContext
+      // await register(data.email, data.password);
+      navigate('/login');
+      toast({
+        title: 'Success',
+        description: 'Account created successfully!',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Registration failed:', error);
+      toast({
+        title: 'Registration Failed',
+        description: 'Unable to create your account. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  const handleVerifyEmail = async () => {
+    const email = form.getValues('email');
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      form.setError('email', {
+        type: 'manual',
+        message: 'Please enter a valid email address',
+      });
+      toast({
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address first',
+        variant: 'destructive',
+      });
       return;
     }
 
-    setIsLoading(true);
+    setVerifyingEmail(true);
 
     try {
-      // API call to register the user
       const response = await fetch(
-        'https://api.simutrade.app/user/auth/email/register',
+        'https://api.simutrade.app/user/auth/email/send-verification',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email, password }), // Only email and password are sent
+          body: JSON.stringify({ email }),
         }
       );
 
-      setIsLoading(false);
+      const data: VerificationResponse = await response.json();
 
-      if (response.ok) {
-        // const data = await response.json(); // Optional: if your API returns data on successful registration
-        navigate('/login', {
-          state: {
-            message:
-              'Registration successful! Please log in with your new account.',
-          },
+      if (data.status === 'success' && data.data.verificationCheck) {
+        setVerificationLink(data.data.verificationCheck);
+
+        toast({
+          title: 'Verification Email Sent',
+          description:
+            'Please check your inbox and click the verification link.',
+          variant: 'success',
         });
       } else {
-        // Attempt to parse error message from API response
-        const errorData = await response.json().catch(() => null);
-        setError(
-          errorData?.message ||
-            `Registration failed. Status: ${response.status}`
-        );
+        setVerifyingEmail(false);
+        toast({
+          title: 'Verification Failed',
+          description: data.message || 'Failed to send verification email.',
+          variant: 'destructive',
+        });
       }
-    } catch (err) {
-      setError('An error occurred during registration. Please try again.');
-      console.error('Register page error:', err);
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      setVerifyingEmail(false);
+      toast({
+        title: 'Verification Failed',
+        description: 'Failed to send verification email. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-          <CardDescription>
-            Enter your details to create a new account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setName(e.target.value)
-                }
-                required
-                disabled={isLoading}
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Left Image Panel */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-6 bg-white">
+        <img
+          src={loginImg}
+          alt="Register"
+          className="h-full w-full object-cover rounded-2xl"
+        />
+      </div>
+
+      {/* Right Register Form Panel */}
+      <div className="flex flex-col w-full lg:w-1/2 items-center justify-center px-8 py-12 sm:px-12 md:px-16 lg:px-24 bg-white">
+        <div className="w-full max-w-md">
+          {/* Logo for mobile view */}
+          <div className="flex lg:hidden justify-center mb-12">
+            <img src="/logo.svg" alt="SimuTrade" className="h-12" />
+          </div>
+
+          {/* Icon and Welcome Text */}
+          <div className="mb-10 text-left">
+            <img src="/icon-nograd.svg" alt="Logo" className="h-16 w-16 mb-4" />
+            <h1 className="text-3xl font-bold text-black mb-2">
+              Create Your Account
+            </h1>
+            <p className="text-gray-600">
+              Sign up to start your trading journey
+            </p>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="text-left">
+                    <FormLabel className="text-primary font-medium">
+                      Email Address
+                    </FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Enter your email"
+                          {...field}
+                          disabled={emailVerified}
+                          className={`bg-white border border-accent rounded-md h-12 focus:border-secondary focus:ring-secondary ${emailVerified ? 'opacity-60' : ''}`}
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        onClick={handleVerifyEmail}
+                        disabled={emailVerified || verifyingEmail}
+                        className={`h-12 text-white font-medium px-4 ${
+                          emailVerified
+                            ? 'bg-green-500 hover:bg-green-600'
+                            : 'bg-primary hover:bg-primary/90'
+                        }`}
+                      >
+                        {emailVerified
+                          ? 'Verified'
+                          : verifyingEmail
+                            ? 'Verifying...'
+                            : 'Verify Email'}
+                      </Button>
+                    </div>
+                    <FormMessage className="text-red-600" />
+                    {verifyingEmail && !emailVerified && (
+                      <p className="text-xs text-blue-500 mt-1">
+                        Please check your inbox and click the verification link.
+                      </p>
+                    )}
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setEmail(e.target.value)
-                }
-                required
-                disabled={isLoading}
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="text-left">
+                    <FormLabel className="text-primary font-medium">
+                      Password
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Create a password"
+                          {...field}
+                          disabled={!emailVerified}
+                          className={`bg-white border border-accent rounded-md pr-10 h-12 focus:border-secondary focus:ring-secondary ${!emailVerified ? 'opacity-60' : ''}`}
+                          onFocus={() => setPasswordTouched(true)}
+                        />
+                        <button
+                          type="button"
+                          onClick={togglePasswordVisibility}
+                          disabled={!emailVerified}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3"
+                        >
+                          {showPassword ? (
+                            <IoEyeOffOutline className="h-5 w-5 text-gray-400" />
+                          ) : (
+                            <IoEyeOutline className="h-5 w-5 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-600" />
+                    {passwordTouched && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Password must be at least 8 characters
+                      </p>
+                    )}
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
-                required
-                minLength={8}
-                disabled={isLoading}
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem className="text-left">
+                    <FormLabel className="text-primary font-medium">
+                      Confirm Password
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          placeholder="Confirm your password"
+                          {...field}
+                          disabled={!emailVerified}
+                          className={`bg-white border ${
+                            passwordsMatch === false
+                              ? 'border-red-500'
+                              : passwordsMatch === true
+                                ? 'border-green-500'
+                                : 'border-accent'
+                          } rounded-md pr-10 h-12 focus:border-secondary focus:ring-secondary ${!emailVerified ? 'opacity-60' : ''}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={toggleConfirmPasswordVisibility}
+                          disabled={!emailVerified}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3"
+                        >
+                          {showConfirmPassword ? (
+                            <IoEyeOffOutline className="h-5 w-5 text-gray-400" />
+                          ) : (
+                            <IoEyeOutline className="h-5 w-5 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    {passwordsMatch === false && field.value && (
+                      <p className="text-xs text-red-500 mt-1">
+                        Passwords don't match
+                      </p>
+                    )}
+                    {passwordsMatch === true && field.value && (
+                      <p className="text-xs text-green-500 mt-1">
+                        Passwords match
+                      </p>
+                    )}
+                    <FormMessage className="text-red-600" />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setConfirmPassword(e.target.value)
-                }
-                required
-                disabled={isLoading}
+
+              <FormField
+                control={form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 text-left">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!emailVerified}
+                        className={`border-accent text-secondary focus:ring-secondary mt-1 ${!emailVerified ? 'opacity-60' : ''}`}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel
+                        className={`text-sm font-medium text-gray-600 cursor-pointer ${!emailVerified ? 'opacity-60' : ''}`}
+                      >
+                        I accept the{' '}
+                        <Link
+                          to="/terms"
+                          className="text-primary hover:text-secondary hover:underline"
+                        >
+                          Terms of Service
+                        </Link>{' '}
+                        and{' '}
+                        <Link
+                          to="/privacy"
+                          className="text-primary hover:text-secondary hover:underline"
+                        >
+                          Privacy Policy
+                        </Link>
+                      </FormLabel>
+                      <FormMessage className="text-red-600" />
+                    </div>
+                  </FormItem>
+                )}
               />
+
+              <Button
+                type="submit"
+                disabled={!emailVerified || passwordsMatch === false}
+                className="w-full bg-primary hover:bg-primary/90 text-white h-12 font-medium disabled:opacity-60"
+              >
+                Create Account
+              </Button>
+            </form>
+          </Form>
+
+          <div className="mt-8">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="bg-accent/50" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating Account...' : 'Register'}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="text-center">
-          <p className="text-sm text-gray-600">
+
+            <div className="mt-6">
+              <Button
+                variant="outline"
+                className="w-full border border-accent rounded-md h-12 hover:bg-accent/10 transition-colors text-primary font-medium"
+              >
+                <FcGoogle className="mr-2 h-4 w-4" />
+                Sign Up with Google
+              </Button>
+            </div>
+          </div>
+
+          <p className="mt-10 text-center text-sm text-gray-600">
             Already have an account?{' '}
             <Link
               to="/login"
-              className="font-medium text-blue-600 hover:underline"
+              className="font-semibold text-primary hover:text-secondary-dark transition-colors"
             >
-              Login here
+              Sign In
             </Link>
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

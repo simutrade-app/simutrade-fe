@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -17,10 +17,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useAuth } from '@/contexts/AuthContext';
 import { FcGoogle } from 'react-icons/fc';
 import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import loginImg from '@/assets/images/login-img.jpg';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -31,8 +31,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -51,12 +50,22 @@ const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       console.log('Login data:', data);
+      // Uncomment when implemented:
       // await login(data.email, data.password);
       // navigate('/dashboard');
-      alert('Login successful (simulated)!');
+      toast({
+        title: 'Success',
+        description: 'Login successful!',
+        variant: 'success',
+      });
     } catch (error) {
       console.error('Login failed:', error);
-      alert('Login failed (simulated)! Check console for details.');
+      toast({
+        title: 'Login Failed',
+        description:
+          'Unable to sign in with those credentials. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 

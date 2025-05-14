@@ -1,0 +1,96 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- **General Commenting Philosophy: Clarity and Purpose over Quantity**
+    - Comments are crucial for explaining the *why* behind non-obvious code, complex logic, or important design decisions.
+    - Strive for self-documenting code; avoid comments that merely restate what the code is doing if it's clear from the code itself.
+    - All comments **must be written in English** to ensure consistency and broad understanding, especially in the context of the Google Solution Challenge.
+
+- **What to Comment:**
+    - **Complex Logic**: Explain intricate algorithms, business rules, or non-standard approaches.
+        ```javascript
+        // Optimized search algorithm for this specific dataset structure.
+        // Details on trade-offs can be found in [link to design doc or issue if applicable].
+        function customSearch(data, term) {
+          // ... complex logic ...
+        }
+        ```
+    - **Design Decisions**: Document the reasoning behind significant architectural choices, especially if there were alternatives.
+        ```typescript
+        // Chose this approach for state management due to performance benefits
+        // in scenarios with frequent updates, despite a slightly higher initial complexity.
+        // See ADR-002 for more details.
+        class HighFrequencyStateManager {
+          // ...
+        }
+        ```
+    - **Workarounds or Hacks**: If a piece of code is a workaround for an issue (e.g., a library bug), explain the problem and why the workaround is necessary.
+        ```python
+        # WORKAROUND: Addresses a known issue in library v1.2.3 where
+        # the default handler causes a memory leak under specific conditions.
+        # See: https://github.com/library/issues/123
+        if some_condition:
+            custom_handler()
+        else:
+            default_handler() # Avoid if possible
+        ```
+    - **Public APIs / Function Signatures (if not using a separate documentation generator like JSDoc/TSDoc extensively):**
+        - Briefly explain the purpose, parameters, and return values for exported functions or methods, especially if their names aren't fully descriptive.
+        ```java
+        /**
+         * Calculates the optimal route between two points considering real-time traffic data.
+         *
+         * @param startPoint The starting geographic coordinate.
+         * @param endPoint The destination geographic coordinate.
+         * @param preferences User preferences for routing (e.g., avoid tolls).
+         * @return An optimal Route object, or null if no route is found.
+         */
+        public Route calculateOptimalRoute(Coordinate startPoint, Coordinate endPoint, RoutingPreferences preferences) {
+            // ... implementation ...
+        }
+        ```
+    - **TODOs or FIXMEs**: Clearly mark areas that need future attention.
+        ```javascript
+        // TODO: Refactor this to use the new `AuthService` once it's implemented (GSC-123).
+        // FIXME: This temporary solution for date parsing doesn't handle all timezones correctly.
+        ```
+
+- **What NOT to Comment (Avoid Redundancy):**
+    - **Obvious Code**: Do not explain code that is simple and self-explanatory.
+        ```javascript
+        // ❌ DON'T:
+        // increment i
+        i++;
+
+        // ❌ DON'T:
+        // Check if the user is logged in
+        if (isUserLoggedIn) {
+            // ...
+        }
+        ```
+    - **Version Control History**: Do not use comments to track changes (e.g., `// Added by John Doe on 2023-10-26`). Git history serves this purpose.
+    - **Outdated Comments**: Ensure comments are updated or removed when the code they describe changes. Stale comments are misleading.
+
+- **Formatting and Style:**
+    - Use consistent comment styling (e.g., `//` for single-line, `/* ... */` or language-specific docblocks for multi-line).
+    - Keep comments concise and to the point.
+    - Ensure proper grammar and spelling.
+
+- **Google Solution Challenge Context:**
+    - High-quality code, including clear and purposeful comments, contributes to the "Technical Merit" evaluation criteria.
+    - Well-commented code demonstrates professionalism and maintainability, which are valued in the competition.
+    - Comments explaining the integration and purpose of Google AI technologies can be particularly helpful for judges.
+      ```javascript
+      // This function utilizes the Gemini API to summarize long articles.
+      // The summarization is then used to provide a quick overview to the user,
+      // enhancing accessibility and saving time.
+      async function summarizeArticleWithGemini(articleText) {
+        // ... API call and processing logic ...
+      }
+      ```
+
+- **Cross-Referencing:**
+    - This rule complements the general coding standards outlined in [core_main_rules.mdc](mdc:.cursor/rules/core_main_rules.mdc).
+    - Refer to this rule when performing code reviews or writing new features.

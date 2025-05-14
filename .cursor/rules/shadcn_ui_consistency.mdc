@@ -1,0 +1,36 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+- **Prioritaskan Komponen shadcn/ui**
+    - Untuk elemen UI umum (Tombol, Input, Kartu, Dialog, dll.), selalu periksa apakah ada komponen yang sesuai dari library `shadcn/ui` (`@/components/ui/...`) sebelum membuat komponen kustom atau menggunakan elemen HTML standar.
+    - Ini membantu menjaga konsistensi visual, aksesibilitas, dan fungsionalitas di seluruh aplikasi.
+
+- **Integrasi dengan Routing (Contoh: Tombol sebagai Link)**
+    - Saat menggunakan komponen `shadcn/ui` yang perlu bertindak sebagai link navigasi (misalnya, `Button`), manfaatkan prop `asChild` untuk mengintegrasikannya dengan komponen `Link` dari `react-router-dom`.
+    - Ini memastikan styling dari `shadcn/ui` tetap diterapkan sambil mempertahankan fungsionalitas routing yang benar.
+
+    ```typescript
+    // ✅ DO: Menggunakan Button shadcn/ui dengan Link router
+    import { Link } from 'react-router-dom';
+    import { Button } from '@/components/ui/button';
+
+    function MyComponent() {
+      return (
+        <Button asChild variant="link">
+          <Link to="/dashboard">Go to Dashboard</Link>
+        </Button>
+      );
+    }
+    ```
+
+    ```html
+    // ❌ DON'T: Hanya menggunakan class pada elemen <a> standar jika Button shadcn tersedia
+    <a href="/dashboard" className="btn btn-link-style">Go to Dashboard</a>
+    ```
+
+- **Referensi Tambahan**
+    - Lihat dokumentasi resmi [shadcn/ui](https://ui.shadcn.com/) untuk daftar komponen yang tersedia dan cara penggunaannya.
+    - Komponen `shadcn/ui` sudah terinstal dan dikonfigurasi dalam proyek ini. Path impor standar adalah `@/components/ui/...`.
+    - Lihat [core_main_rules.mdc](mdc:.cursor/rules/core_main_rules.mdc) untuk panduan umum pengembangan.

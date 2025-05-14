@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1894.87 353.98">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: #00403d;
+      }
+
+      .cls-3 {
+        letter-spacing: -.01em;
+      }
+
+      .cls-2 {
+        font-family: Inter-SemiBold, Inter;
+        font-size: 296.12px;
+        font-weight: 600;
+      }
+
+      .cls-4 {
+        fill: url(#linear-gradient);
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="52.28" y1="182.56" x2="326.56" y2="172.08" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d9ff00"/>
+      <stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <rect class="cls-1" width="353.98" height="353.98" rx="96.47" ry="96.47"/>
+    <path class="cls-4" d="M39.65,176.74l31.86,62.86c13.23,25.88,31.61,19.76,39.86,5.58,10.8-18.57,22.09-41.75,27.56-53.28,1.77-3.73,21.93-33.39,41.67-1.83,5.93,9.39,25.92,52.29,25.92,52.29,0,0,17.86,30.99,38.5,3.49,2.29-3.05,4.19-6.39,5.78-9.86,15.28-33.31,22.28-44.25,22.28-44.25,0,0,14.7-28.25,41.25-15-11.16-24.93-26.17-54.3-31.88-65.34-2.47-4.78-6.14-8.88-10.77-11.62-8.56-5.05-22.21-7.18-34.23,17.43-17.62,36.09-31.29,76.52-56.56,52.32-4.03-3.86-7.28-8.46-9.77-13.45-19.06-38.31-25.08-47.77-25.08-47.77,0,0-23.44-30-45,14.06-14.51,29.66-22.02,43.96-25.37,50.15-10.98,17.11-26.48,8.6-36.03,4.23Z"/>
+  </g>
+  <text class="cls-2" transform="translate(432.89 284.96)"><tspan x="0" y="0">Simut</tspan><tspan class="cls-3" x="827.89" y="0">r</tspan><tspan x="942.3" y="0">ade</tspan></text>
+</svg>

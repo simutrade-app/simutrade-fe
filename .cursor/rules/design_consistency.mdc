@@ -1,0 +1,106 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Design Consistency Guidelines
+
+This rule ensures design consistency across the SimuTrade codebase, with special focus on the Google Solution Challenge requirements for technical merit and user experience.
+
+## Color System Standards
+
+- **Brand Color Palette**
+  - The official SimuTrade brand colors are defined in [tailwind.config.js](mdc:simutrade-frontend/tailwind.config.js) and must be used consistently:
+    ```typescript
+    // Primary Colors
+    primary: '#00403D',     // Pine Green - Main brand color
+    secondary: '#D9FF00',   // Fluorescent Green - Accent brand color
+    secondary-dark: '#BFE000', // Darker variation of secondary
+    accent: '#B3CFCD',      // Light Pine - Subtle accent color
+    simutrade-white: '#E4E9E9' // Custom off-white
+    ```
+  
+- **Color Usage Rules**
+  - **❌ DON'T:** Create new custom colors outside the design system
+    ```tsx
+    // DON'T add arbitrary colors
+    <div className="text-[#2a5b59]"></div>
+    ```
+  
+  - **✅ DO:** Use the Tailwind color classes that reference the design system
+    ```tsx
+    // DO use the design system colors
+    <div className="text-primary"></div>
+    <div className="bg-secondary hover:bg-secondary-dark"></div>
+    ```
+
+- **Color Semantics**
+  - Primary (Pine Green #00403D): Used for main UI elements, headers, important buttons
+  - Secondary (Fluorescent Green #D9FF00): Used for accents, calls-to-action, highlights
+  - Secondary Dark (#BFE000): Used for hover states on secondary elements
+  - Accent (Light Pine #B3CFCD): Used for subtle backgrounds, dividers, less important UI elements
+  - SimuTrade White (#E4E9E9): Used for backgrounds and text on dark backgrounds
+
+## Typography Standards
+
+- Use the Inter font family consistently across the application
+- Maintain a consistent type scale as defined in the Tailwind configuration
+- Headings should use appropriate font weights and sizes for hierarchy
+
+## Code Commenting & Documentation
+
+As outlined in [core_main_rules.mdc](mdc:.cursor/rules/core_main_rules.mdc), our commenting guidelines for the Google Solution Challenge are:
+
+- **Minimize Comments**
+  - Code should be self-documenting with clear variable/function names
+  - Only add comments to explain complex logic, business rules, or non-obvious design decisions
+  - Focus on the "why" not the "what" in comments
+
+- **English Only**
+  - All comments MUST be written in English
+  - Maintain proper grammar and clarity
+
+- **Google AI Integration Documentation**
+  - When integrating Gemini or other Google AI technologies, include comments explaining:
+    ```typescript
+    // This function leverages Gemini API to analyze market trends
+    // and provide personalized investment recommendations based on
+    // the user's risk profile and investment history
+    async function analyzeMarketWithGemini(userData, marketData) {
+      // Implementation details...
+    }
+    ```
+
+- **Example Formatting**
+  - Use consistent comment style:
+    ```typescript
+    // Single line comments use this style
+    
+    /**
+     * Multi-line doc comments use this style for function documentation
+     * @param {string} param1 - Description of parameter
+     * @returns {number} Description of return value
+     */
+    ```
+
+## User Interface Consistency
+
+- **Component Reusability**
+  - Create and use shared components for common UI elements
+  - Maintain consistent padding, margins, and spacing
+
+- **Responsiveness**
+  - All UI elements must be responsive following the breakpoints defined in Tailwind
+  
+- **Accessibility**
+  - Maintain sufficient color contrast for all text (WCAG AA compliance)
+  - Ensure all interactive elements have proper focus states
+
+## Relation to Google Solution Challenge
+
+Consistent design and code quality directly impacts:
+- **Technical Merit (40%)**: Well-structured, maintainable code with clear documentation
+- **User Experience (10%)**: Consistent visual language improving usability
+- **Innovation (25%)**: Allows focus on innovative features rather than dealing with inconsistencies
+
+Always reference this guide when implementing new features or modifying existing components to maintain the high standards expected for the Google Solution Challenge.

@@ -14,12 +14,7 @@ import { FiMenu, FiX, FiLogIn, FiUserPlus, FiGrid } from 'react-icons/fi';
 import { FaPaperPlane } from 'react-icons/fa6';
 import gsap from 'gsap';
 
-// This value determines how far the user needs to scroll down
-// before the header starts hiding/showing.
-// Adjust this value based on the actual height of your hero section.
-// For a more dynamic approach, consider getting the hero section's
-// offsetHeight and using that value, or using IntersectionObserver.
-const HERO_SECTION_SCROLL_THRESHOLD = 400; // Example: 400 pixels
+const HERO_SECTION_SCROLL_THRESHOLD = 400; 
 
 type HeaderProps = Record<string, unknown>;
 
@@ -27,7 +22,7 @@ const Header: React.FC<HeaderProps> = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isLoggedIn } = useAuth();
   const headerRef = useRef<HTMLElement>(null);
-  const lastScrollYRef = useRef(0); // To store the last scroll position
+  const lastScrollYRef = useRef(0); 
 
   useEffect(() => {
     if (headerRef.current) {

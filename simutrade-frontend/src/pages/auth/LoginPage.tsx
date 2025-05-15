@@ -21,6 +21,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import loginImg from '@/assets/images/login-img.jpg';
 import { useToast } from '@/hooks/use-toast';
+import FloatingExportCard from '@/components/ui/FloatingExportCard';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -75,14 +76,32 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      {/* Left Image Panel */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-6 bg-white">
+      {/* Left Image Panel with Floating Card */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-6 bg-white relative">
         <img
           src={loginImg}
           alt="Login"
           className="h-full w-full object-cover rounded-2xl"
         />
+
+        {/* Use the FloatingExportCard component */}
+        <FloatingExportCard />
       </div>
+
+      {/* Add the floating animation keyframes to the document */}
+      <style>{`
+        @keyframes float {
+          0% {
+            transform: translate(-50%, -50%);
+          }
+          50% {
+            transform: translate(-50%, -53%);
+          }
+          100% {
+            transform: translate(-50%, -50%);
+          }
+        }
+      `}</style>
 
       {/* Right Login Form Panel */}
       <div className="flex flex-col w-full lg:w-1/2 items-center justify-center px-8 py-12 sm:px-12 md:px-16 lg:px-24 bg-white">

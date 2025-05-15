@@ -20,6 +20,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import loginImg from '@/assets/images/login-img.jpg';
 import { useToast } from '@/hooks/use-toast';
+import FloatingExportCard from '@/components/ui/FloatingExportCard';
 
 const registerSchema = z
   .object({
@@ -236,12 +237,15 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Left Image Panel */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-6 bg-white">
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-6 bg-white relative">
         <img
           src={loginImg}
           alt="Register"
           className="h-full w-full object-cover rounded-2xl"
         />
+
+        {/* Add the FloatingExportCard component */}
+        <FloatingExportCard />
       </div>
 
       {/* Right Register Form Panel */}

@@ -1,9 +1,12 @@
 # Abaikan semua file dan folder di root
 *
 
-# Izinkan folder simutrade-frontend dan isinya
+# Izinkan folder simutrade-frontend dan isinya (sementara, sampai dipindahkan)
 !simutrade-frontend/
 !simutrade-frontend/**
+
+# Pastikan .gitignore sendiri tidak diabaikan
+!.gitignore
 
 # Abaikan file dan folder spesifik
 # Logs
@@ -42,5 +45,14 @@ tasks/
 # Screenshots
 screenshots/
 
-# Pastikan .gitignore sendiri tidak diabaikan
-!.gitignore
+# Cursor and Roo specific
+.cursor/
+.roo/
+
+# Scripts and taskmaster
+.scripts/
+.taskmasterconfig
+
+# Node.js specific
+package.json
+package-lock.json

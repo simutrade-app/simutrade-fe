@@ -18,6 +18,7 @@ import OverallTradeSentimentGauge from '../../components/dashboard/OverallTradeS
 import TradePulseNotificationsCard from '../../components/dashboard/TradePulseNotificationsCard';
 import TradeSimulationChart from '../../components/dashboard/TradeSimulationChart';
 import TotalCustomers from '../../components/dashboard/TotalCustomers';
+import ExportOpportunitiesCard from '../../components/dashboard/ExportOpportunitiesCard';
 
 const { Title, Text } = Typography;
 
@@ -211,13 +212,7 @@ const DashboardPage: React.FC = () => {
           />
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="Export Opportunities" style={{ height: '100%' }}>
-            <Text>
-              Details about export opportunities will go here... (e.g., a list
-              or summary with potential values)
-            </Text>
-            {/* TODO: Integrate with actual data */}
-          </Card>
+          <ExportOpportunitiesCard />
         </Col>
         <Col xs={24} lg={8}>
           <TradePulseNotificationsCard

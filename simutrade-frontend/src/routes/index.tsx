@@ -1,6 +1,7 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useRef, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { gsap } from 'gsap';
 
 // Layouts
 import LandingLayout from '@/layouts/LandingLayout';
@@ -17,11 +18,41 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 
 // Fallback loading component
-const LoadingFallback = () => (
-  <div className="loading-container">
-    <p>Loading...</p>
-  </div>
-);
+const LoadingFallback = () => {
+  const iconRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (iconRef.current) {
+      gsap.to(iconRef.current, {
+        y: -25,
+        repeat: -1,
+        yoyo: true,
+        duration: 0.8,
+        ease: 'sine.inOut',
+      });
+    }
+  }, []);
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#f0f2f5', // Optional: a light background
+      }}
+      className="loading-container"
+    >
+      <img
+        ref={iconRef}
+        src="/icon-nograd.svg"
+        alt="Loading..."
+        style={{ width: '100px', height: '100px' }}
+      />
+    </div>
+  );
+};
 
 const AppRoutes: React.FC = () => {
   return (
@@ -66,7 +97,6 @@ const AppRoutes: React.FC = () => {
             path="settings"
             element={<div>Settings Page (Coming Soon)</div>}
           />
-
         </Route>
 
         {/* 404 Not Found Route */}

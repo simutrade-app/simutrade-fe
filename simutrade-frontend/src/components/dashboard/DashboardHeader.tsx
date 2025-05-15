@@ -10,7 +10,6 @@ import {
   BookOutlined,
   DashboardOutlined,
   KeyOutlined,
-  NotificationOutlined,
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -189,7 +188,7 @@ const DashboardHeader: React.FC = () => {
         <div className="header-container">
           <div className="header-left">
             <Input.Search
-              placeholder="Search for stocks, portfolios, or documents..."
+              placeholder="Find export rules, tariffs, or trade routes…"
               className="header-search"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}

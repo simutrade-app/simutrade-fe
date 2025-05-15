@@ -15,7 +15,6 @@ const HomePage = lazy(() => import('@/pages/HomePage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
-const StockDetailPage = lazy(() => import('@/pages/dashboard/StockDetailPage'));
 
 // Fallback loading component
 const LoadingFallback = () => (
@@ -68,8 +67,6 @@ const AppRoutes: React.FC = () => {
             element={<div>Settings Page (Coming Soon)</div>}
           />
 
-          {/* Dynamic Route Params Example */}
-          <Route path="stock/:symbol" element={<StockDetailPage />} />
         </Route>
 
         {/* 404 Not Found Route */}

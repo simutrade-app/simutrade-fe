@@ -1,63 +1,81 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Row, Col, Card, Statistic, List, Typography, Button } from 'antd';
+import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+
+const { Title, Text } = Typography;
 
 const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-  
+
+  // Mock activity data
+  const activities = [
+    {
+      time: '10:30 AM',
+      description: 'Bought 10 shares of AAPL at $172.35',
+    },
+    {
+      time: 'Yesterday',
+      description: 'Sold 5 shares of MSFT at $338.12',
+    },
+    {
+      time: 'Yesterday',
+      description: 'Dividend payment received: $12.50',
+    },
+  ];
+
   return (
     <div className="dashboard-page">
-      <h1>Dashboard</h1>
-      <p>Welcome back, {user?.name || 'User'}</p>
-      
+      <Title level={4}>Welcome back, {user?.name || 'User'}</Title>
+
       <div className="dashboard-stats">
-        <div className="stat-card">
-          <h3>Portfolio Value</h3>
-          <p className="stat-value">$10,345.67</p>
-          <p className="stat-change positive">+2.5%</p>
-        </div>
-        
-        <div className="stat-card">
-          <h3>Open Positions</h3>
-          <p className="stat-value">8</p>
-        </div>
-        
-        <div className="stat-card">
-          <h3>Today's P/L</h3>
-          <p className="stat-value">$145.20</p>
-          <p className="stat-change positive">+1.4%</p>
-        </div>
+        <Card variant="borderless" className="stat-card">
+          <Statistic
+            title="Portfolio Value"
+            value={10345.67}
+            precision={2}
+            prefix="$"
+          />
+          <div className="stat-change positive">
+            <ArrowUpOutlined /> 2.5%
+          </div>
+        </Card>
+
+        <Card variant="borderless" className="stat-card">
+          <Statistic title="Open Positions" value={8} />
+        </Card>
+
+        <Card variant="borderless" className="stat-card">
+          <Statistic
+            title="Today's P/L"
+            value={145.2}
+            precision={2}
+            prefix="$"
+          />
+          <div className="stat-change positive">
+            <ArrowUpOutlined /> 1.4%
+          </div>
+        </Card>
       </div>
-      
-      <section className="recent-activity">
-        <h2>Recent Activity</h2>
-        <div className="activity-list">
-          <div className="activity-item">
-            <p className="activity-time">10:30 AM</p>
-            <p className="activity-description">Bought 10 shares of AAPL at $172.35</p>
-          </div>
-          <div className="activity-item">
-            <p className="activity-time">Yesterday</p>
-            <p className="activity-description">Sold 5 shares of MSFT at $338.12</p>
-          </div>
-          <div className="activity-item">
-            <p className="activity-time">Yesterday</p>
-            <p className="activity-description">Dividend payment received: $12.50</p>
-          </div>
-        </div>
-      </section>
-      
-      <button onClick={handleLogout} className="logout-button">
-        Logout
-      </button>
+
+      <div className="recent-activity">
+        <Title level={5}>Recent Activity</Title>
+        <List
+          bordered
+          className="activity-list"
+          dataSource={activities}
+          renderItem={(item) => (
+            <List.Item className="activity-item">
+              <Text type="secondary" className="activity-time">
+                {item.time}
+              </Text>
+              <Text className="activity-description">{item.description}</Text>
+            </List.Item>
+          )}
+        />
+      </div>
     </div>
   );
 };
 
-export default DashboardPage; 
+export default DashboardPage;

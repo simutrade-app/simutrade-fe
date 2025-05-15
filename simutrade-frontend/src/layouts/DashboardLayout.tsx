@@ -1,7 +1,10 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Header from '../components/layout/Header';
+import { Layout } from 'antd';
+import DashboardHeader from '../components/dashboard/DashboardHeader';
 import Sidebar from '../components/layout/Sidebar';
+
+const { Content } = Layout;
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -9,15 +12,15 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   return (
-    <div className="dashboard-layout">
+    <Layout style={{ minHeight: '100vh' }} className="dashboard-antd-layout">
       <Sidebar />
-      <div className="main-content">
-        <Header />
-        <main className="dashboard-content">
+      <Layout className="site-layout">
+        <DashboardHeader />
+        <Content className="dashboard-content">
           {children || <Outlet />}
-        </main>
-      </div>
-    </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

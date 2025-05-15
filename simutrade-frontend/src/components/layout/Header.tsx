@@ -10,7 +10,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet';
-import { FiMenu, FiX, FiLogIn, FiUserPlus } from 'react-icons/fi';
+import { FiMenu, FiX, FiLogIn } from 'react-icons/fi';
 import { FaPaperPlane } from 'react-icons/fa6';
 import gsap from 'gsap';
 
@@ -200,7 +200,7 @@ const Header: React.FC<HeaderProps> = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Link to={isLoggedIn ? '/dashboard' : '/register'}>
-                    <FiUserPlus className="mr-2 h-4 w-4" /> Export Now
+                    <FaPaperPlane className="mr-2 h-4 w-4" /> Export Now
                   </Link>
                 </Button>
               </nav>

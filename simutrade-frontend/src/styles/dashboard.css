@@ -1,0 +1,168 @@
+/* Dashboard Layout Styles */
+.dashboard-antd-layout {
+  background-color: #f5f5f5;
+  display: flex;
+}
+
+.site-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+/* Sidebar Styles */
+.dashboard-sidebar {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-sidebar .logo-app-name {
+  background: transparent !important;
+  margin: 16px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  color: #fff;
+}
+
+/* Header Styles */
+.dashboard-header {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  padding: 0 24px;
+  background: white;
+  height: 64px;
+  line-height: 64px;
+}
+
+.header-search {
+  width: 250px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-dropdown {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-dropdown .user-name {
+  font-weight: 500;
+}
+
+/* Content Area Styles */
+.dashboard-content {
+  margin: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  min-height: 280px;
+}
+
+/* Dashboard Page Components */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f0f0;
+}
+
+.stat-card h3 {
+  color: #8c8c8c;
+  font-size: 14px;
+  font-weight: normal;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: #262626;
+}
+
+.stat-change {
+  margin-top: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.stat-change.positive {
+  color: #52c41a;
+}
+
+.stat-change.negative {
+  color: #f5222d;
+}
+
+.recent-activity {
+  margin-top: 32px;
+}
+
+.recent-activity h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.activity-list {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+}
+
+.activity-item {
+  padding: 16px;
+  display: flex;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-time {
+  width: 100px;
+  color: #8c8c8c;
+  font-size: 14px;
+  margin: 0;
+}
+
+.activity-description {
+  flex: 1;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin: 16px;
+    padding: 16px;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .header-search {
+    width: 180px;
+  }
+}

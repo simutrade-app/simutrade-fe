@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SimuTrade OAuth Redirect</title>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f2f5;
+        color: #333;
+      }
+      .container {
+        text-align: center;
+        padding: 2rem;
+        border-radius: 8px;
+        background-color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+      }
+      h1 {
+        margin-bottom: 1rem;
+      }
+      p {
+        margin-bottom: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Processing Authentication</h1>
+      <p>Please wait while we securely log you in...</p>
+    </div>
+
+    <script>
+      (function () {
+        // Extract token from URL
+        const queryParams = new URLSearchParams(window.location.search);
+        const token = queryParams.get('token');
+
+        if (token) {
+          try {
+            // Store token in localStorage
+            localStorage.setItem('simutrade_token', token);
+
+            // Parse JWT to get user info - this is client-side only
+            function parseJwt(token) {
+              try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                  atob(base64)
+                    .split('')
+                    .map(
+                      (c) =>
+                        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                    )
+                    .join('')
+                );
+                return JSON.parse(jsonPayload);
+              } catch (e) {
+                console.error('Failed to parse JWT:', e);
+                return null;
+              }
+            }
+
+            // Get user data from token
+            const decodedToken = parseJwt(token);
+            if (decodedToken && decodedToken.email) {
+              const userData = {
+                id: decodedToken.sub || Date.now().toString(),
+                email: decodedToken.email,
+                name: decodedToken.email.split('@')[0],
+                role: 'user',
+              };
+
+              // Store user data
+              localStorage.setItem('simutrade_user', JSON.stringify(userData));
+            }
+
+            console.log(
+              'OAuth authentication successful, redirecting to dashboard'
+            );
+
+            // Redirect to dashboard
+            window.location.href = '/dashboard';
+          } catch (error) {
+            console.error('Error processing OAuth token:', error);
+            alert('Authentication error. Please try again.');
+            window.location.href = '/login';
+          }
+        } else {
+          console.error('No token found in OAuth callback');
+          alert('No authentication token found. Please try again.');
+          window.location.href = '/login';
+        }
+      })();
+    </script>
+  </body>
+</html>

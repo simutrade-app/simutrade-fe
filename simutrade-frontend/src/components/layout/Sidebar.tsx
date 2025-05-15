@@ -15,7 +15,7 @@ import {
 import { logoutUser } from '../../services/AuthService';
 
 // Using URL references for public assets instead of imports
-const logoOpen = '/logo.svg'; // Logo for expanded sidebar
+const logoOpen = '/logo.png'; // Logo for expanded sidebar
 const logoClosed = '/logo-border.svg'; // Logo for collapsed sidebar
 
 const { Sider } = Layout;

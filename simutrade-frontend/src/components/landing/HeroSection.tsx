@@ -372,12 +372,12 @@ const HeroSection: React.FC = () => {
               </span>
               <div className="flex items-center gap-4">
                 <img
-                  src="/images/google-logo.svg"
+                  src="/images/google-logo.png"
                   alt="Google Gemini"
                   className="h-9 filter grayscale opacity-80"
                 />
                 <img
-                  src="/images/gemini-logo.svg"
+                  src="/images/gemini-logo.png"
                   alt="Google"
                   className="h-9 filter grayscale opacity-80"
                 />

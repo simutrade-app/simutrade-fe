@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Configuration
 const API_URL = 'https://api.simutrade.app';
-const AUTH_TOKEN_KEY = 'simutrade_token';
-const USER_DATA_KEY = 'simutrade_user';
+export const AUTH_TOKEN_KEY = 'simutrade_token';
+export const USER_DATA_KEY = 'simutrade_user';
 
 // Toggle between real API calls and mock responses
 let useMockApi = false; // Set to false to use real API

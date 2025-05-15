@@ -242,7 +242,7 @@ const RegisterPage: React.FC = () => {
         <div className="w-full max-w-md">
           {/* Logo for mobile view */}
           <div className="flex lg:hidden justify-center mb-12">
-            <img src="/logo.svg" alt="SimuTrade" className="h-12" />
+            <img src="/logo.png" alt="SimuTrade" className="h-12" />
           </div>
 
           {/* Icon and Welcome Text */}
@@ -449,7 +449,7 @@ const RegisterPage: React.FC = () => {
 
             <div className="mt-6">
               <a
-                href="https://api.simutrade.app/user/auth/google"
+                href="https://api.simutrade.app/user/auth/google?redirect_url=https://simutrade.app/oauth-redirect.html"
                 className="block w-full"
               >
                 <Button

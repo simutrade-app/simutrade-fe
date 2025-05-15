@@ -93,7 +93,7 @@ const Header: React.FC<HeaderProps> = () => {
         <div className="logo-container">
           <Link to="/" className="flex items-center">
             <img
-              src="/logo.svg"
+              src="/logo.png"
               alt="Simutrade Logo"
               className="header-logo h-8 md:h-6 w-auto ml-3"
             />
@@ -149,7 +149,7 @@ const Header: React.FC<HeaderProps> = () => {
                 <SheetTitle className="text-left">
                   <Link to="/" onClick={() => setMobileMenuOpen(false)}>
                     <img
-                      src="/logo.svg"
+                      src="/logo.png"
                       alt="Simutrade Logo"
                       className="header-logo h-8 w-auto mb-4"
                     />

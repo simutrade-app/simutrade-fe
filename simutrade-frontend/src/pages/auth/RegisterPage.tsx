@@ -362,11 +362,6 @@ const RegisterPage: React.FC = () => {
                         </button>
                       </div>
                     </FormControl>
-                    {passwordsMatch === false && field.value && (
-                      <p className="text-xs text-red-500 mt-1">
-                        Passwords don't match
-                      </p>
-                    )}
                     {passwordsMatch === true && field.value && (
                       <p className="text-xs text-green-500 mt-1">
                         Passwords match
@@ -397,14 +392,14 @@ const RegisterPage: React.FC = () => {
                         I accept the{' '}
                         <Link
                           to="/terms"
-                          className="text-primary hover:text-secondary hover:underline"
+                          className="text-primary hover:text-emerald-600 hover:underline"
                         >
                           Terms of Service
                         </Link>{' '}
                         and{' '}
                         <Link
                           to="/privacy"
-                          className="text-primary hover:text-secondary hover:underline"
+                          className="text-primary hover:text-emerald-600 hover:underline"
                         >
                           Privacy Policy
                         </Link>

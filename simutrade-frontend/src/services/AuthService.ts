@@ -52,13 +52,19 @@ const apiRequest = async (
 
     const response = await axios(url, options);
     return response.data;
-  } catch (error: any) {
-    if (error.response) {
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
       return error.response.data;
-    } else {
+    } else if (error instanceof Error) {
       return {
         status: 'error',
         message: error.message || 'Network error',
+        data: {},
+      };
+    } else {
+      return {
+        status: 'error',
+        message: 'An unknown error occurred',
         data: {},
       };
     }
@@ -127,7 +133,7 @@ export const checkEmailVerification = async (token: string) => {
     let email = '';
     try {
       email = atob(token).replace('mock_token_for_', '');
-    } catch (e) {
+    } catch (_e) {
       email = 'unknown@example.com';
     }
 
@@ -323,6 +329,10 @@ export const resetPassword = async (password: string, token: string) => {
 export const logoutUser = () => {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(USER_DATA_KEY);
+  // Redirect to landing page
+  if (typeof window !== 'undefined') {
+    window.location.href = '/';
+  }
 };
 
 // 8. Check if user is authenticated
@@ -336,7 +346,7 @@ export const getCurrentUser = () => {
   if (userData) {
     try {
       return JSON.parse(userData);
-    } catch (e) {
+    } catch (_e) {
       return null;
     }
   }

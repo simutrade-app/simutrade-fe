@@ -8,7 +8,7 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 
 const Footer = React.forwardRef<HTMLElement, Record<string, unknown>>(
-  (props, ref) => {
+  (_props, ref) => {
     const currentYear = new Date().getFullYear();
 
     const quickLinks = [

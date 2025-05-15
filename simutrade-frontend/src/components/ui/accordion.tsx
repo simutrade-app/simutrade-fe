@@ -23,10 +23,10 @@ const AccordionTrigger = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => {
   // Create a style object to override browser defaults
-  const inlineStyles = {
+  const inlineStyles: React.CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
     WebkitAppearance: 'none',
-    mozAppearance: 'none',
+    MozAppearance: 'none',
     appearance: 'none',
     userSelect: 'none' as const,
     outline: 'none',

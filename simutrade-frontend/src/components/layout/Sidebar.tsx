@@ -12,6 +12,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from '@ant-design/icons';
+import { logoutUser } from '../../services/AuthService';
 
 // Using URL references for public assets instead of imports
 const logoOpen = '/logo.svg'; // Logo for expanded sidebar
@@ -244,16 +245,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
           }}
         />
 
-        <Link to="/logout" style={{ width: '100%' }}>
-          <Button
-            icon={<LogoutOutlined />}
-            danger
-            type="primary"
-            style={{ width: '100%' }}
-          >
-            {!collapsed && 'Logout'}
-          </Button>
-        </Link>
+        <Button
+          icon={<LogoutOutlined />}
+          danger
+          type="primary"
+          style={{ width: '100%' }}
+          onClick={logoutUser}
+        >
+          {!collapsed && 'Logout'}
+        </Button>
       </div>
     </Sider>
   );

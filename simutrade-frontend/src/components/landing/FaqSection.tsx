@@ -156,45 +156,6 @@ const FaqSection: React.FC = () => {
   return (
     <section ref={sectionRef} className="bg-white py-10 lg:py-14">
       <div className="max-w-[85rem] px-4 sm:px-6 lg:px-8 mx-auto">
-        <style jsx global>{`
-          /* Global styles to override browser defaults */
-          button {
-            -webkit-tap-highlight-color: transparent !important;
-            -webkit-touch-callout: none !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-          }
-
-          button:focus,
-          button:active,
-          button:hover {
-            outline: none !important;
-            box-shadow: none !important;
-            -webkit-appearance: none !important;
-            -moz-appearance: none !important;
-            appearance: none !important;
-            background-color: transparent !important;
-          }
-
-          /* Specific selector to override system highlighting */
-          .faq-button {
-            -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
-          }
-
-          /* Target WebKit browsers specifically */
-          @media not all and (min-resolution: 0.001dpcm) {
-            @supports (-webkit-appearance: none) {
-              .faq-item button {
-                outline: none !important;
-                box-shadow: none !important;
-                -webkit-tap-highlight-color: transparent !important;
-                background-color: transparent !important;
-              }
-            }
-          }
-        `}</style>
         <div className="grid md:grid-cols-5 gap-16">
           <div className="md:col-span-2" ref={titleSectionRef}>
             <div>

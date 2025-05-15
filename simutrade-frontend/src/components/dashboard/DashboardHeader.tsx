@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Input, Badge, Avatar, Dropdown, Tooltip, Divider } from 'antd';
 import {
   BellOutlined,
@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCurrentUser } from '@/services/AuthService';
 import type { MenuProps } from 'antd';
 
 const { Header: AntHeader } = Layout;
@@ -27,8 +28,18 @@ interface Notification {
 }
 
 const DashboardHeader: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [searchValue, setSearchValue] = useState<string>('');
+  const [userData, setUserData] = useState<any>(null);
+
+  // Fetch user data from token
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      setUserData(user);
+      console.log('User data loaded in header:', user);
+    }
+  }, []);
 
   // Mock notifications - in real app, would come from a notification service/context
   const [notifications, setNotifications] = useState<Notification[]>([
@@ -87,9 +98,9 @@ const DashboardHeader: React.FC = () => {
       key: 'user-info',
       label: (
         <div className="user-info-item">
-          <div className="user-info-name">{user?.name || 'User'}</div>
+          <div className="user-info-name">{userData?.name || 'User'}</div>
           <div className="user-info-email">
-            {user?.email || 'user@example.com'}
+            {userData?.email || 'user@example.com'}
           </div>
         </div>
       ),
@@ -225,11 +236,11 @@ const DashboardHeader: React.FC = () => {
               <div className="user-dropdown">
                 <Avatar
                   icon={<UserOutlined />}
-                  src={user?.avatarUrl}
+                  src={userData?.avatarUrl}
                   size="default"
                   className="user-avatar"
                 />
-                <span className="user-name">{user?.name || 'User'}</span>
+                <span className="user-name">{userData?.name || 'User'}</span>
               </div>
             </Dropdown>
           </div>

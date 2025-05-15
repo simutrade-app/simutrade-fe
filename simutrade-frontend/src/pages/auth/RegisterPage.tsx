@@ -242,7 +242,7 @@ const RegisterPage: React.FC = () => {
         <div className="w-full max-w-md">
           {/* Logo for mobile view */}
           <div className="flex lg:hidden justify-center mb-12">
-            <img src="/logo.png" alt="SimuTrade" className="h-12" />
+            <img src="/icon-nograd.svg" alt="SimuTrade" className="h-12" />
           </div>
 
           {/* Icon and Welcome Text */}

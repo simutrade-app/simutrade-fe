@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCurrentUser } from '@/services/AuthService';
 import { Card, List, Typography, Row, Col } from 'antd';
 import {
   LineChart,
@@ -103,6 +104,16 @@ const tradePulseNotifications = [
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const [userData, setUserData] = useState<any>(null);
+
+  // Fetch user data from token
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUserData(currentUser);
+      console.log('User data loaded in dashboard:', currentUser);
+    }
+  }, []);
 
   const activities = [
     {
@@ -148,7 +159,7 @@ const DashboardPage: React.FC = () => {
             marginBottom: '24px',
           }}
         >
-          Welcome back, {user?.name || 'User'}
+          Welcome back, {userData?.name || user?.name || 'User'}
         </Title>
       </div>
 

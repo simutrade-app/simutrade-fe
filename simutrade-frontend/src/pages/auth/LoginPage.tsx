@@ -22,7 +22,7 @@ import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import loginImg from '@/assets/images/login-img.jpg';
 import { useToast } from '@/hooks/use-toast';
 import FloatingExportCard from '@/components/ui/FloatingExportCard';
-import { loginUser } from '@/services/AuthService';
+import { loginUser, getSavedCredentials } from '@/services/AuthService';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -42,10 +42,6 @@ const LoginPage: React.FC = () => {
   // Get the intended destination if redirected from protected route
   const from = location.state?.from?.pathname || '/dashboard';
 
-  useEffect(() => {
-    console.log('LoginPage component rendered - updated version');
-  }, []);
-
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -55,13 +51,31 @@ const LoginPage: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    console.log('LoginPage component rendered - updated version');
+
+    // Check for saved credentials and auto-fill if found
+    const savedCredentials = getSavedCredentials();
+    if (savedCredentials) {
+      form.reset({
+        email: savedCredentials.email,
+        password: savedCredentials.password,
+        rememberMe: true,
+      });
+    }
+  }, [form]);
+
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
       console.log('Login data:', data);
 
-      // Call the API directly using the loginUser function
-      const response = await loginUser(data.email, data.password);
+      // Call the API directly using the loginUser function with the rememberMe flag
+      const response = await loginUser(
+        data.email,
+        data.password,
+        data.rememberMe
+      );
       console.log('Login response:', response);
 
       if (response.status === 'success') {

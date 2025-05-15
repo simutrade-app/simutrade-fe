@@ -4,6 +4,9 @@ import axios from 'axios';
 const API_URL = 'https://api.simutrade.app';
 export const AUTH_TOKEN_KEY = 'simutrade_token';
 export const USER_DATA_KEY = 'simutrade_user';
+export const REMEMBER_ME_KEY = 'simutrade_remember';
+export const SAVED_EMAIL_KEY = 'simutrade_saved_email';
+export const SAVED_PASSWORD_KEY = 'simutrade_saved_password';
 
 // Toggle between real API calls and mock responses
 let useMockApi = false; // Set to false to use real API
@@ -229,7 +232,11 @@ export const registerUser = async (email: string, password: string) => {
 };
 
 // 4. Login User
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (
+  email: string,
+  password: string,
+  rememberMe: boolean = false
+) => {
   if (useMockApi) {
     // Mock implementation
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -267,6 +274,15 @@ export const loginUser = async (email: string, password: string) => {
     };
     localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
 
+    // Handle remember me feature
+    if (rememberMe) {
+      localStorage.setItem(REMEMBER_ME_KEY, 'true');
+      localStorage.setItem(SAVED_EMAIL_KEY, email);
+      localStorage.setItem(SAVED_PASSWORD_KEY, password); // In a real app, storing passwords is not recommended
+    } else {
+      clearSavedCredentials();
+    }
+
     return {
       status: 'success',
       message: 'Login Success',
@@ -295,6 +311,15 @@ export const loginUser = async (email: string, password: string) => {
         role: 'user',
       };
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+
+      // Handle remember me feature
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_ME_KEY, 'true');
+        localStorage.setItem(SAVED_EMAIL_KEY, email);
+        localStorage.setItem(SAVED_PASSWORD_KEY, password); // In a real app, storing passwords is not recommended
+      } else {
+        clearSavedCredentials();
+      }
     }
 
     return response;
@@ -353,10 +378,35 @@ export const resetPassword = async (password: string, token: string) => {
 export const logoutUser = () => {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(USER_DATA_KEY);
+
+  // Only clear credentials if remember me is not enabled
+  if (localStorage.getItem(REMEMBER_ME_KEY) !== 'true') {
+    clearSavedCredentials();
+  }
+
   // Redirect to landing page
   if (typeof window !== 'undefined') {
     window.location.href = '/';
   }
+};
+
+// Helper function to get saved credentials
+export const getSavedCredentials = () => {
+  if (localStorage.getItem(REMEMBER_ME_KEY) === 'true') {
+    return {
+      email: localStorage.getItem(SAVED_EMAIL_KEY) || '',
+      password: localStorage.getItem(SAVED_PASSWORD_KEY) || '',
+      rememberMe: true,
+    };
+  }
+  return null;
+};
+
+// Helper function to clear saved credentials
+export const clearSavedCredentials = () => {
+  localStorage.removeItem(REMEMBER_ME_KEY);
+  localStorage.removeItem(SAVED_EMAIL_KEY);
+  localStorage.removeItem(SAVED_PASSWORD_KEY);
 };
 
 // 8. Check if user is authenticated
@@ -388,4 +438,6 @@ export default {
   logoutUser,
   isAuthenticated,
   getCurrentUser,
+  getSavedCredentials,
+  clearSavedCredentials,
 };

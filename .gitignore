@@ -1,58 +1,9 @@
 # Abaikan semua file dan folder di root
 *
 
-# Izinkan folder simutrade-frontend dan isinya (sementara, sampai dipindahkan)
+# Izinkan folder simutrade-frontend dan isinya
 !simutrade-frontend/
 !simutrade-frontend/**
 
 # Pastikan .gitignore sendiri tidak diabaikan
 !.gitignore
-
-# Abaikan file dan folder spesifik
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dev-debug.log
-
-# Dependency directories
-node_modules/
-
-# Environment variables
-.env
-.env.local
-.env.development
-.env.production
-
-# Editor directories and files
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS specific
-.DS_Store
-
-# Task files
-tasks.json
-tasks/
-
-# Screenshots
-screenshots/
-
-# Cursor and Roo specific
-.cursor/
-.roo/
-
-# Scripts and taskmaster
-.scripts/
-.taskmasterconfig
-
-# Node.js specific
-package.json
-package-lock.json

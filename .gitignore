@@ -30,3 +30,6 @@ tasks/
 
 screenshots/
 
+*
+!simutrade-frontend/
+!.gitignore

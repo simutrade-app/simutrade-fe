@@ -69,11 +69,13 @@ const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Auth Routes - Updated */}
+        {/* OAuth Callback Route - Standalone outside of any layout */}
+        <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+
+        {/* Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
         </Route>
 
         {/* Protected Dashboard Routes */}

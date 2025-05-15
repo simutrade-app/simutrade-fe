@@ -1,12 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { isAuthenticated } from '@/utils/auth';
+import { gsap } from 'gsap';
 
-// Import constants from AuthService
-import { AUTH_TOKEN_KEY, USER_DATA_KEY } from '@/services/AuthService';
+// Import from AuthService
+import {
+  AUTH_TOKEN_KEY,
+  USER_DATA_KEY,
+  isAuthenticated,
+} from '@/services/AuthService';
 
 // Helper function to parse JWT. IMPORTANT: This is for reading claims client-side
 // and NOT for verifying the token's signature. Verification must happen server-side.
@@ -31,7 +35,23 @@ const OAuthCallbackPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [processStatus, setProcessStatus] = useState('Processing...');
+  const [processStatus, setProcessStatus] = useState(
+    'Processing authentication...'
+  );
+  const iconRef = useRef<HTMLImageElement>(null);
+
+  // Set up the animation
+  useEffect(() => {
+    if (iconRef.current) {
+      gsap.to(iconRef.current, {
+        y: -25,
+        repeat: -1,
+        yoyo: true,
+        duration: 0.8,
+        ease: 'sine.inOut',
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -139,13 +159,22 @@ const OAuthCallbackPage: React.FC = () => {
   }, [location, navigate, toast]);
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-background">
+    <div className="flex h-screen w-screen items-center justify-center bg-white">
       <div className="text-center">
-        <p className="text-xl font-semibold text-foreground">{processStatus}</p>
-        <p className="text-muted-foreground">
+        <div className="flex justify-center mb-6">
+          <img
+            ref={iconRef}
+            src="/icon-nograd.svg"
+            alt="Loading..."
+            className="h-20 w-20"
+          />
+        </div>
+        <p className="text-xl font-semibold text-primary mt-4">
+          {processStatus}
+        </p>
+        <p className="text-gray-600 mt-2">
           Please wait while we securely log you in.
         </p>
-        {/* Optional: Add a spinner here */}
       </div>
     </div>
   );

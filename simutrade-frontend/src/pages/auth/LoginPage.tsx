@@ -269,7 +269,7 @@ const LoginPage: React.FC = () => {
 
             <div className="mt-6">
               <a
-                href="https://api.simutrade.app/user/auth/google?redirect_url=https://simutrade.app/oauth-redirect.html"
+                href="https://api.simutrade.app/user/auth/google"
                 className="block w-full"
               >
                 <Button

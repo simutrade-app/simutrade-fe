@@ -10,11 +10,11 @@ import {
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet';
-import { FiMenu, FiX, FiLogIn, FiUserPlus, FiGrid } from 'react-icons/fi';
+import { FiMenu, FiX, FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { FaPaperPlane } from 'react-icons/fa6';
 import gsap from 'gsap';
 
-const HERO_SECTION_SCROLL_THRESHOLD = 400; 
+const HERO_SECTION_SCROLL_THRESHOLD = 400;
 
 type HeaderProps = Record<string, unknown>;
 
@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isLoggedIn } = useAuth();
   const headerRef = useRef<HTMLElement>(null);
-  const lastScrollYRef = useRef(0); 
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
     if (headerRef.current) {
@@ -122,28 +122,19 @@ const Header: React.FC<HeaderProps> = () => {
         </nav>
 
         <div className="hidden md:flex items-center space-x-3">
-          {!isLoggedIn ? (
-            <>
-              <Button
-                variant="outline"
-                className="text-primary border-primary [&:hover]:!bg-primary [&:hover]:!text-white rounded-[8px]"
-                asChild
-              >
-                <Link to="/login">Login</Link>
-              </Button>
-              <Button className="[&:hover]:!bg-primary/90">
-                Export Now
-                <FaPaperPlane className="ml-1 h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <Button asChild className="rounded-[8px] [&:hover]:!bg-primary/90">
-              <Link to="/dashboard">
-                <FiGrid className="mr-2 h-4 w-4" />
-                Dashboard
-              </Link>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            className="text-primary border-primary [&:hover]:!bg-primary [&:hover]:!text-white rounded-[8px]"
+            asChild
+          >
+            <Link to={isLoggedIn ? '/dashboard' : '/login'}>Login</Link>
+          </Button>
+          <Button className="[&:hover]:!bg-primary/90" asChild>
+            <Link to={isLoggedIn ? '/dashboard' : '/register'}>
+              Export Now
+              <FaPaperPlane className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
 
         <div className="md:hidden">
@@ -193,48 +184,25 @@ const Header: React.FC<HeaderProps> = () => {
                 </Link>
                 <hr className="my-2" />
 
-                {isLoggedIn ? (
-                  <Button
-                    className="w-full justify-start rounded-[8px] [&:hover]:!bg-primary/90"
-                    asChild
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Link to="/dashboard">
-                      <FiGrid className="mr-2 h-4 w-4" /> Dashboard
-                    </Link>
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-primary border-primary [&:hover]:!bg-primary [&:hover]:!text-white rounded-[8px]"
-                      asChild
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Link to="/login">
-                        <FiLogIn className="mr-2 h-4 w-4" /> Login
-                      </Link>
-                    </Button>
-                    <Button
-                      className="w-full justify-start rounded-[8px] [&:hover]:!bg-primary/90"
-                      asChild
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Link to="/register">
-                        <FiUserPlus className="mr-2 h-4 w-4" /> Sign Up
-                      </Link>
-                    </Button>
-                    <Button
-                      className="w-full rounded-[8px] justify-start [&:hover]:!bg-primary/90"
-                      onClick={() => {
-                        console.log('Export Now clicked');
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      Export Now <FaPaperPlane className="ml-1 h-4 w-4" />
-                    </Button>
-                  </>
-                )}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-primary border-primary [&:hover]:!bg-primary [&:hover]:!text-white rounded-[8px]"
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to={isLoggedIn ? '/dashboard' : '/login'}>
+                    <FiLogIn className="mr-2 h-4 w-4" /> Login
+                  </Link>
+                </Button>
+                <Button
+                  className="w-full justify-start rounded-[8px] [&:hover]:!bg-primary/90"
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to={isLoggedIn ? '/dashboard' : '/register'}>
+                    <FiUserPlus className="mr-2 h-4 w-4" /> Export Now
+                  </Link>
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>

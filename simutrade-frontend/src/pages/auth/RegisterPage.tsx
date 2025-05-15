@@ -21,6 +21,7 @@ import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import loginImg from '@/assets/images/login-img.jpg';
 import { useToast } from '@/hooks/use-toast';
 import FloatingExportCard from '@/components/ui/FloatingExportCard';
+import { verifyEmail, checkEmailVerification } from '@/services/AuthService';
 
 const registerSchema = z
   .object({
@@ -41,16 +42,6 @@ const registerSchema = z
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
-
-interface VerificationResponse {
-  status: string;
-  message: string;
-  data: {
-    verificationCheck?: string;
-    email?: string;
-    isVerified?: boolean;
-  };
-}
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -104,19 +95,8 @@ const RegisterPage: React.FC = () => {
 
         if (!token) return;
 
-        // Check verification status
-        const response = await fetch(
-          'https://api.simutrade.app/user/auth/email/verify-status',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token }),
-          }
-        );
-
-        const data: VerificationResponse = await response.json();
+        // Check verification status using AuthService
+        const data = await checkEmailVerification(token);
 
         if (data.status === 'success' && data.data.isVerified) {
           setEmailVerified(true);
@@ -193,18 +173,7 @@ const RegisterPage: React.FC = () => {
     setVerifyingEmail(true);
 
     try {
-      const response = await fetch(
-        'https://api.simutrade.app/user/auth/email/send-verification',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      const data: VerificationResponse = await response.json();
+      const data = await verifyEmail(email);
 
       if (data.status === 'success' && data.data.verificationCheck) {
         setVerificationLink(data.data.verificationCheck);

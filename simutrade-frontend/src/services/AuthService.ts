@@ -6,7 +6,7 @@ const AUTH_TOKEN_KEY = 'simutrade_token';
 const USER_DATA_KEY = 'simutrade_user';
 
 // Toggle between real API calls and mock responses
-let useMockApi = true; // Set to false to use real API
+let useMockApi = false; // Set to false to use real API
 
 // Function to toggle API mode
 export const toggleApiMode = (useMock: boolean) => {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +22,7 @@ import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import loginImg from '@/assets/images/login-img.jpg';
 import { useToast } from '@/hooks/use-toast';
 import FloatingExportCard from '@/components/ui/FloatingExportCard';
+import { loginUser } from '@/services/AuthService';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -33,7 +34,13 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Get the intended destination if redirected from protected route
+  const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     console.log('LoginPage component rendered - updated version');
@@ -49,24 +56,52 @@ const LoginPage: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
     try {
       console.log('Login data:', data);
-      // Uncomment when implemented:
-      // await login(data.email, data.password);
-      // navigate('/dashboard');
-      toast({
-        title: 'Success',
-        description: 'Login successful!',
-        variant: 'success',
-      });
-    } catch (error) {
+
+      // Call the API directly using the loginUser function
+      const response = await loginUser(data.email, data.password);
+      console.log('Login response:', response);
+
+      if (response.status === 'success') {
+        // If login is successful, store the token from the response
+        // This is already handled inside loginUser function
+
+        toast({
+          title: 'Success',
+          description: 'Login successful!',
+          variant: 'success',
+        });
+
+        // Delay navigation slightly to ensure toast is shown
+        setTimeout(() => {
+          try {
+            navigate(from, { replace: true });
+          } catch (navError) {
+            console.warn('Navigation failed, using fallback', navError);
+            window.location.href = from;
+          }
+        }, 300);
+      } else {
+        // Show specific error from the API
+        toast({
+          title: 'Login Failed',
+          description: response.message || 'Email or password is wrong.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
       console.error('Login failed:', error);
+
+      // Show a more user-friendly error message
       toast({
         title: 'Login Failed',
-        description:
-          'Unable to sign in with those credentials. Please try again.',
+        description: 'Email or password is wrong.',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -134,6 +169,8 @@ const LoginPage: React.FC = () => {
                       <Input
                         type="email"
                         placeholder="Enter your email"
+                        autoComplete="email"
+                        disabled={isLoading}
                         {...field}
                         className="bg-white border border-accent rounded-md h-12 focus:border-secondary focus:ring-secondary"
                       />
@@ -157,6 +194,8 @@ const LoginPage: React.FC = () => {
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Enter your password"
                           {...field}
+                          disabled={isLoading}
+                          autoComplete="current-password"
                           className="bg-white border border-accent rounded-md pr-10 h-12 focus:border-secondary focus:ring-secondary"
                         />
                         <button
@@ -187,6 +226,7 @@ const LoginPage: React.FC = () => {
                         id="rememberMe"
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={isLoading}
                         className="border-accent text-secondary focus:ring-secondary"
                       />
                       <label
@@ -209,9 +249,10 @@ const LoginPage: React.FC = () => {
 
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-full bg-primary hover:bg-primary/90 text-white h-12 font-medium"
               >
-                Sign In
+                {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
           </Form>
@@ -229,6 +270,7 @@ const LoginPage: React.FC = () => {
             <div className="mt-6">
               <Button
                 variant="outline"
+                disabled={isLoading}
                 className="w-full border border-accent rounded-md h-12 hover:bg-accent/10 transition-colors text-primary font-medium"
               >
                 <FcGoogle className="mr-2 h-4 w-4" />

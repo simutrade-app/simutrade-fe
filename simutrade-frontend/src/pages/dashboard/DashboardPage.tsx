@@ -3,16 +3,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getCurrentUser } from '@/services/AuthService';
 import { Card, List, Typography, Row, Col } from 'antd';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import {
   GlobalOutlined,
   RiseOutlined,
   ExperimentOutlined,
@@ -26,6 +16,8 @@ import TopCommoditiesChart from '../../components/dashboard/TopCommoditiesChart'
 import TopTradingPartnersList from '../../components/dashboard/TopTradingPartnersList';
 import OverallTradeSentimentGauge from '../../components/dashboard/OverallTradeSentimentGauge';
 import TradePulseNotificationsCard from '../../components/dashboard/TradePulseNotificationsCard';
+import TradeSimulationChart from '../../components/dashboard/TradeSimulationChart';
+import TotalCustomers from '../../components/dashboard/TotalCustomers';
 
 const { Title, Text } = Typography;
 
@@ -104,7 +96,9 @@ const tradePulseNotifications = [
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(
+    null
+  );
 
   // Fetch user data from token
   useEffect(() => {
@@ -159,7 +153,7 @@ const DashboardPage: React.FC = () => {
             marginBottom: '24px',
           }}
         >
-          Welcome back, {userData?.name || user?.name || 'User'}
+          Welcome back, {String(userData?.name || user?.name || 'User')}
         </Title>
       </div>
 
@@ -180,7 +174,7 @@ const DashboardPage: React.FC = () => {
       {/* Row 2: Main Charts */}
       <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
         <Col xs={24} lg={16}>
-          <LineChartComponent />
+          <TradeSimulationChart />
         </Col>
         <Col xs={24} lg={8} style={{ minHeight: '350px' }}>
           <TopCommoditiesChart data={topCommoditiesData} />
@@ -200,16 +194,21 @@ const DashboardPage: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Row 4: Original Cards + Notifications */}
+      {/* Row 4: Original Cards + Notifications + Total Customers */}
       <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
         <Col xs={24} lg={8}>
-          <Card title="Active Trade Missions" style={{ height: '100%' }}>
-            <Text>
-              Details about active missions will go here... (e.g., a list or
-              summary with progress)
-            </Text>
-            {/* TODO: Integrate with actual data and link to Missions Hub */}
-          </Card>
+          <TotalCustomers
+            data={{
+              count: 2420,
+              growthPercent: 25,
+              avatars: [
+                'https://randomuser.me/api/portraits/men/1.jpg',
+                'https://randomuser.me/api/portraits/women/2.jpg',
+                'https://randomuser.me/api/portraits/women/3.jpg',
+                'https://randomuser.me/api/portraits/men/4.jpg',
+              ],
+            }}
+          />
         </Col>
         <Col xs={24} lg={8}>
           <Card title="Export Opportunities" style={{ height: '100%' }}>
@@ -250,44 +249,6 @@ const DashboardPage: React.FC = () => {
         </Col>
       </Row>
     </div>
-  );
-};
-
-const LineChartComponent: React.FC = () => {
-  const data = [
-    { month: 'Jan', value: 150 },
-    { month: 'Feb', value: 220 },
-    { month: 'Mar', value: 300 },
-    { month: 'Apr', value: 280 },
-    { month: 'May', value: 450 },
-    { month: 'Jun', value: 400 },
-    { month: 'Jul', value: 510 },
-  ];
-
-  return (
-    <Card
-      title="Your Trade Simulation Activity"
-      style={{ height: '100%', minHeight: '350px' }}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={data}
-          margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
-          <YAxis />
-          <RechartsTooltip />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#4CAF50"
-            activeDot={{ r: 8 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </Card>
   );
 };
 

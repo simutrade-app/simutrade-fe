@@ -1,4 +1,5 @@
 import './App.css';
+import './styles/leaflet-map.css';
 import { AuthProvider } from './contexts/AuthContext';
 import AppRoutes from './routes';
 import ErrorBoundary from './components/ErrorBoundary';

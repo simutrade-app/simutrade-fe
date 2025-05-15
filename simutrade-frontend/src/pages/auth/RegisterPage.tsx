@@ -21,7 +21,11 @@ import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import loginImg from '@/assets/images/login-img.jpg';
 import { useToast } from '@/hooks/use-toast';
 import FloatingExportCard from '@/components/ui/FloatingExportCard';
-import { verifyEmail, checkEmailVerification } from '@/services/AuthService';
+import {
+  verifyEmail,
+  checkEmailVerification,
+  registerUser,
+} from '@/services/AuthService';
 
 const registerSchema = z
   .object({
@@ -129,14 +133,30 @@ const RegisterPage: React.FC = () => {
       }
 
       console.log('Register data:', data);
-      // Uncomment when register is implemented in AuthContext
-      // await register(data.email, data.password);
-      navigate('/login');
-      toast({
-        title: 'Success',
-        description: 'Account created successfully!',
-        variant: 'success',
-      });
+      // Call the registerUser service function
+      const registrationResponse = await registerUser(
+        data.email,
+        data.password
+      );
+      console.log('Registration response:', registrationResponse);
+
+      if (registrationResponse.status === 'success') {
+        navigate('/login');
+        toast({
+          title: 'Success',
+          description:
+            registrationResponse.message || 'Account created successfully!',
+          variant: 'success',
+        });
+      } else {
+        toast({
+          title: 'Registration Failed',
+          description:
+            registrationResponse.message ||
+            'Unable to create your account. Please try again.',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Registration failed:', error);
       toast({
@@ -316,11 +336,6 @@ const RegisterPage: React.FC = () => {
                       </div>
                     </FormControl>
                     <FormMessage className="text-red-600" />
-                    {passwordTouched && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Password must be at least 8 characters
-                      </p>
-                    )}
                   </FormItem>
                 )}
               />
@@ -328,7 +343,7 @@ const RegisterPage: React.FC = () => {
               <FormField
                 control={form.control}
                 name="confirmPassword"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="text-left">
                     <FormLabel className="text-primary font-medium">
                       Confirm Password
@@ -341,9 +356,9 @@ const RegisterPage: React.FC = () => {
                           {...field}
                           disabled={!emailVerified}
                           className={`bg-white border ${
-                            passwordsMatch === false
+                            passwordsMatch === false && field.value
                               ? 'border-red-500'
-                              : passwordsMatch === true
+                              : passwordsMatch === true && field.value
                                 ? 'border-green-500'
                                 : 'border-accent'
                           } rounded-md pr-10 h-12 focus:border-secondary focus:ring-secondary ${!emailVerified ? 'opacity-60' : ''}`}
@@ -362,11 +377,13 @@ const RegisterPage: React.FC = () => {
                         </button>
                       </div>
                     </FormControl>
-                    {passwordsMatch === true && field.value && (
-                      <p className="text-xs text-green-500 mt-1">
-                        Passwords match
-                      </p>
-                    )}
+                    {passwordsMatch === true &&
+                      field.value &&
+                      !fieldState.error && (
+                        <p className="text-xs text-green-500 mt-1">
+                          Passwords match
+                        </p>
+                      )}
                     <FormMessage className="text-red-600" />
                   </FormItem>
                 )}
@@ -431,13 +448,19 @@ const RegisterPage: React.FC = () => {
             </div>
 
             <div className="mt-6">
-              <Button
-                variant="outline"
-                className="w-full border border-accent rounded-md h-12 hover:bg-accent/10 transition-colors text-primary font-medium"
+              <a
+                href="https://api.simutrade.app/user/auth/google"
+                className="block w-full"
               >
-                <FcGoogle className="mr-2 h-4 w-4" />
-                Sign Up with Google
-              </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border border-accent rounded-md h-12 hover:bg-accent/10 transition-colors text-primary font-medium"
+                  type="button"
+                >
+                  <FcGoogle className="mr-2 h-4 w-4" />
+                  Sign Up with Google
+                </Button>
+              </a>
             </div>
           </div>
 

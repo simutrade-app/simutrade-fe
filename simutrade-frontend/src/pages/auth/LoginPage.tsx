@@ -91,7 +91,7 @@ const LoginPage: React.FC = () => {
           variant: 'destructive',
         });
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Login failed:', error);
 
       // Show a more user-friendly error message
@@ -268,14 +268,20 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div className="mt-6">
-              <Button
-                variant="outline"
-                disabled={isLoading}
-                className="w-full border border-accent rounded-md h-12 hover:bg-accent/10 transition-colors text-primary font-medium"
+              <a
+                href="https://api.simutrade.app/user/auth/google"
+                className="block w-full"
               >
-                <FcGoogle className="mr-2 h-4 w-4" />
-                Sign In with Google
-              </Button>
+                <Button
+                  variant="outline"
+                  disabled={isLoading}
+                  className="w-full border border-accent rounded-md h-12 hover:bg-accent/10 transition-colors text-primary font-medium"
+                  type="button"
+                >
+                  <FcGoogle className="mr-2 h-4 w-4" />
+                  Sign In with Google
+                </Button>
+              </a>
             </div>
           </div>
 

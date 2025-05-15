@@ -15,6 +15,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
+const OAuthCallbackPage = lazy(() => import('@/pages/auth/OAuthCallbackPage'));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 
 // Fallback loading component
@@ -72,6 +73,7 @@ const AppRoutes: React.FC = () => {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
         </Route>
 
         {/* Protected Dashboard Routes */}

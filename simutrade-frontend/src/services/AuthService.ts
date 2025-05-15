@@ -30,7 +30,7 @@ if (typeof window !== 'undefined') {
 const apiRequest = async (
   endpoint: string,
   method: string,
-  data: any = null
+  data: Record<string, unknown> | null = null
 ) => {
   try {
     const url = `${API_URL}${endpoint}`;
@@ -133,7 +133,7 @@ export const checkEmailVerification = async (token: string) => {
     let email = '';
     try {
       email = atob(token).replace('mock_token_for_', '');
-    } catch (_e) {
+    } catch {
       email = 'unknown@example.com';
     }
 
@@ -199,8 +199,32 @@ export const registerUser = async (email: string, password: string) => {
       data: { email },
     };
   } else {
-    // Real API implementation
-    return apiRequest('/user/auth/email/register', 'POST', { email, password });
+    // Real API implementation with direct axios.post
+    try {
+      const url = `${API_URL}/user/auth/email/register`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      const requestBody = { email, password };
+      const response = await axios.post(url, requestBody, { headers });
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response) {
+        return error.response.data;
+      } else if (error instanceof Error) {
+        return {
+          status: 'error',
+          message: error.message || 'Network error or unexpected issue',
+          data: {},
+        };
+      } else {
+        return {
+          status: 'error',
+          message: 'An unknown error occurred during registration',
+          data: {},
+        };
+      }
+    }
   }
 };
 
@@ -346,7 +370,7 @@ export const getCurrentUser = () => {
   if (userData) {
     try {
       return JSON.parse(userData);
-    } catch (_e) {
+    } catch {
       return null;
     }
   }

@@ -4,6 +4,19 @@
   display: flex;
 }
 
+/* CSS Reset untuk masalah teks vertikal */
+.ant-layout,
+.ant-layout *,
+.dashboard-page-wrapper,
+.dashboard-page-wrapper * {
+  white-space: normal !important;
+  word-break: normal !important;
+  word-wrap: normal !important;
+  letter-spacing: normal !important;
+  text-align: left !important;
+  writing-mode: horizontal-tb !important;
+}
+
 .site-layout {
   flex: 1;
   display: flex;

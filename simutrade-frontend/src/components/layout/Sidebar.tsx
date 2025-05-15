@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Menu, Button } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import type { MenuProps } from 'antd';
@@ -7,15 +7,15 @@ import {
   AppstoreOutlined,
   LogoutOutlined,
   TrophyOutlined,
-  MessageOutlined,
   FileTextOutlined,
   GlobalOutlined,
-  BulbOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from '@ant-design/icons';
-import logoOpen from '../../../public/logo.svg'; // Logo for expanded sidebar
-import logoClosed from '../../../public/logo-border.svg'; // Logo for collapsed sidebar
+
+// Using URL references for public assets instead of imports
+const logoOpen = '/logo.svg'; // Logo for expanded sidebar
+const logoClosed = '/logo-border.svg'; // Logo for collapsed sidebar
 
 const { Sider } = Layout;
 
@@ -27,6 +27,14 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
   const location = useLocation();
 
+  // Set sidebar to be closed by default on initial load
+  useEffect(() => {
+    if (collapsed === false) {
+      // Only trigger this once on initial mount
+      onCollapse(true);
+    }
+  }, []);
+
   // Main menu items
   const mainMenuItems: MenuProps['items'] = [
     {
@@ -35,29 +43,38 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       label: <Link to="/dashboard">Dashboard</Link>,
     },
     {
-      key: '/playground',
+      key: 'trading',
       icon: <GlobalOutlined />,
-      label: <Link to="/playground">Simulation Playground</Link>,
+      label: 'Trading',
+      children: [
+        {
+          key: '/playground',
+          label: <Link to="/playground">Simulation Playground</Link>,
+        },
+        {
+          key: '/strategies',
+          label: <Link to="/strategies">AI Strategies</Link>,
+        },
+      ],
     },
     {
-      key: '/missions',
+      key: 'learning',
       icon: <TrophyOutlined />,
-      label: <Link to="/missions">Trade Missions</Link>,
-    },
-    {
-      key: '/mentor',
-      icon: <MessageOutlined />,
-      label: <Link to="/mentor">AI Trade Mentor</Link>,
-    },
-    {
-      key: '/blueprints',
-      icon: <FileTextOutlined />,
-      label: <Link to="/blueprints">Export Blueprints</Link>,
-    },
-    {
-      key: '/arena',
-      icon: <TrophyOutlined />,
-      label: <Link to="/arena">Global Trade Arena</Link>,
+      label: 'Learning',
+      children: [
+        {
+          key: '/missions',
+          label: <Link to="/missions">Trade Missions</Link>,
+        },
+        {
+          key: '/mentor',
+          label: <Link to="/mentor">AI Trade Mentor</Link>,
+        },
+        {
+          key: '/arena',
+          label: <Link to="/arena">Global Trade Arena</Link>,
+        },
+      ],
     },
     {
       key: 'analytics',
@@ -79,9 +96,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       ],
     },
     {
-      key: '/strategies',
-      icon: <BulbOutlined />,
-      label: <Link to="/strategies">AI Strategies</Link>,
+      key: '/blueprints',
+      icon: <FileTextOutlined />,
+      label: <Link to="/blueprints">Export Blueprints</Link>,
     },
   ];
 
@@ -162,6 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
             selectedKeys={[location.pathname]}
             style={{
               border: 'none',
+              textAlign: 'left',
             }}
             className="green-theme-menu"
           />
@@ -194,40 +212,48 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
               .ant-layout-sider-trigger {
                 display: none !important;
               }
+              .ant-menu-title-content {
+                text-align: left !important;
+              }
             `}
           </style>
         </div>
+      </div>
 
-        <div
+      {/* Footer with toggle and logout positioned at the very bottom */}
+      <div
+        style={{
+          padding: '0 16px',
+          marginBottom: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+        }}
+      >
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={() => onCollapse(!collapsed)}
           style={{
-            padding: '0 16px',
-            marginBottom: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            marginBottom: '16px',
+            color: '#4CAF50',
           }}
-        >
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => onCollapse(!collapsed)}
-            style={{
-              marginBottom: '16px',
-              color: '#4CAF50',
-            }}
-          />
+        />
 
-          <Link to="/logout" style={{ width: '100%' }}>
-            <Button
-              icon={<LogoutOutlined />}
-              danger
-              type="primary"
-              style={{ width: '100%' }}
-            >
-              {!collapsed && 'Logout'}
-            </Button>
-          </Link>
-        </div>
+        <Link to="/logout" style={{ width: '100%' }}>
+          <Button
+            icon={<LogoutOutlined />}
+            danger
+            type="primary"
+            style={{ width: '100%' }}
+          >
+            {!collapsed && 'Logout'}
+          </Button>
+        </Link>
       </div>
     </Sider>
   );

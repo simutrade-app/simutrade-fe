@@ -1,54 +1,108 @@
-# React + TypeScript + Vite
+# SimuTrade
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![SimuTrade Logo](public/images/logo/logo.png)
 
-Currently, two official plugins are available:
+> **SimuTrade** adalah platform simulasi perdagangan ekspor-impor berbasis web yang memanfaatkan AI untuk memberikan insight peluang ekspor global, analisis kebutuhan impor negara, dan simulasi rute perdagangan secara interaktif.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## Fitur Utama
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Simulation Playground**: Eksplorasi peta dunia interaktif untuk melihat kebutuhan impor tiap negara.
+- **Trade Route Simulation**: Simulasikan rute ekspor dari Indonesia ke negara tujuan dengan berbagai moda transportasi.
+- **AI-powered Insights**: Rekomendasi peluang ekspor dan estimasi biaya/waktu pengiriman.
+- **Konfigurasi Komoditas & Volume**: Pilih komoditas, volume, dan negara tujuan secara fleksibel.
+- **UI Modern & Responsive**: Desain dashboard modern, mudah digunakan, dan mobile-friendly.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+---
+
+## Contoh Tampilan
+
+![Contoh UI Simulation Playground](../screenshot-map-simulation.jpg)
+
+---
+
+## Struktur Folder
+
+```
+simutrade-frontend/
+├── public/
+│   └── images/
+│       └── logo/
+├── src/
+│   ├── assets/
+│   ├── components/
+│   │   ├── dashboard/
+│   │   ├── landing/
+│   │   ├── layout/
+│   │   ├── playground/
+│   │   ├── strategies/
+│   │   └── ui/
+│   ├── contexts/
+│   ├── hooks/
+│   ├── layouts/
+│   ├── lib/
+│   ├── pages/
+│   │   ├── auth/
+│   │   ├── dashboard/
+│   │   ├── missions/
+│   │   ├── playground/
+│   │   └── strategies/
+│   ├── routes/
+│   ├── services/
+│   ├── styles/
+│   └── utils/
+├── package.json
+└── README.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Teknologi Utama
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+- **React** + **TypeScript**
+- **Vite** (build tool)
+- **Tailwind CSS** (utility-first styling)
+- **Ant Design** (komponen UI)
+- **react-markdown** (render konten markdown)
+
+---
+
+## Instalasi & Menjalankan Lokal
+
+1. Masuk ke folder `simutrade-frontend`:
+   ```bash
+   cd simutrade-frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   # atau
+   yarn install
+   ```
+3. Jalankan aplikasi:
+   ```bash
+   npm run dev
+   # atau
+   yarn dev
+   ```
+4. Buka di browser: [http://localhost:5173](http://localhost:5173)
+
+---
+
+## Catatan Pengembangan
+
+- Pastikan Node.js versi terbaru.
+- Untuk pengembangan UI, lihat folder `src/components` dan `src/pages`.
+- Konfigurasi styling di `src/styles` dan `tailwind.config.js`.
+- Logo dan aset gambar di `public/images/logo/`.
+
+---
+
+## Lisensi
+
+Open Source - MIT License
+
+---
+
+> SimuTrade dikembangkan untuk membantu eksportir, analis perdagangan, dan pelaku bisnis memahami peluang ekspor global secara data-driven dan interaktif.

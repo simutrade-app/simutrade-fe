@@ -15,6 +15,8 @@ import {
   Form,
   Radio,
   Tabs,
+  Row,
+  Col,
 } from 'antd';
 import {
   ArrowRightOutlined,
@@ -38,7 +40,7 @@ const ShipOutlined = () => <span style={{ fontSize: '16px' }}>🚢</span>;
 const RiseOutlined = () => <span style={{ fontSize: '16px' }}>✈️</span>;
 const CarOutlined = () => <span style={{ fontSize: '16px' }}>🚚</span>;
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
 // Mock data - would be fetched from API in production (GET /api/commodities)
@@ -64,7 +66,22 @@ const originCountries = [
 ];
 
 // Transport mode information for display
-const transportModeInfo = {
+interface TransportModeInfo {
+  name: string;
+  icon: React.ReactNode;
+  timeMultiplier: number;
+  costMultiplier: number;
+  description: string;
+}
+
+interface TransportModes {
+  [key: string]: TransportModeInfo;
+  sea: TransportModeInfo;
+  air: TransportModeInfo;
+  land: TransportModeInfo;
+}
+
+const transportModeInfo: TransportModes = {
   sea: {
     name: 'Sea Freight',
     icon: <ShipOutlined />,
@@ -96,6 +113,22 @@ interface SimulationPanelProps {
   simulationResults: any | null;
 }
 
+interface FormDataType {
+  commodity: number | null;
+  volume: number;
+  transportMode: string;
+  originCountry: string;
+  customDestination: boolean;
+  destinationCountry: string | null;
+  destinationName: string;
+  destinationLat: number | null;
+  destinationLng: number | null;
+  customFields: {
+    price: number;
+    weight: number;
+  };
+}
+
 const SimulationPanel: React.FC<SimulationPanelProps> = ({
   selectedCountry,
   onRunSimulation,
@@ -106,7 +139,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   const [form] = Form.useForm();
   const [activeTab, setActiveTab] = useState('1');
   const [customDestination, setCustomDestination] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     commodity: null,
     volume: 50, // default value
     transportMode: 'sea',
@@ -145,7 +178,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   }, [formData, selectedCountry]);
 
   // Helper function to calculate base shipping time based on distance
-  const calculateBaseTime = (country) => {
+  const calculateBaseTime = (country: any) => {
     // This would be based on real distance data in production
     // For now, just some mock logic based on region
     const region = country.name || '';
@@ -311,762 +344,371 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
   return (
     <Card
-      title={
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <RocketOutlined style={{ color: '#1890ff', marginRight: '8px' }} />
-          <span>Simulation Control Panel</span>
-        </div>
-      }
+      className="simulation-panel"
       style={{
-        height: '100%',
-        minHeight: '550px',
-        borderRadius: '8px',
+        height: 'auto',
+        borderRadius: '12px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
       }}
-      className="simulation-panel"
+      bordered={false}
     >
-      {!selectedCountry && !customDestination ? (
-        <div
-          style={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '24px',
-            textAlign: 'center',
-          }}
-        >
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <div style={{ textAlign: 'center' }}>
-                <Title
-                  level={5}
-                  style={{ marginBottom: '16px', marginTop: '8px' }}
-                >
-                  Select a destination country
+      {simulationResults ? (
+        // Active simulation view with more horizontal layout
+        <div>
+          <Row gutter={[24, 24]} align="middle" justify="space-between">
+            <Col xs={24} md={12}>
+              <Space direction="vertical" size="small">
+                <Title level={4} style={{ margin: 0 }}>
+                  <RocketOutlined style={{ marginRight: '8px' }} />
+                  Active Simulation
                 </Title>
                 <Text type="secondary">
-                  Click on any country on the map to configure your export
-                  simulation
+                  {getSelectedOriginCountry()?.flag || '🌏'}{' '}
+                  {getSelectedOriginCountry()?.name || 'Unknown'} to{' '}
+                  {selectedCountry?.name || 'Selected Destination'}
                 </Text>
-                <Divider plain>Or</Divider>
-              </div>
-            }
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: '20px',
-              }}
-            >
-              <GlobalOutlined
-                style={{
-                  fontSize: '48px',
-                  color: '#bfbfbf',
-                  marginBottom: '20px',
-                }}
-              />
-              <Button
-                type="primary"
-                onClick={() => handleCustomDestinationToggle(true)}
-                icon={<CompassOutlined />}
-                size="large"
-              >
-                Use Custom Destination
-              </Button>
-            </div>
-          </Empty>
+              </Space>
+            </Col>
+            <Col xs={24} md={12} style={{ textAlign: 'right' }}>
+              <Space>
+                <Button onClick={handleReset} icon={<ReloadOutlined />}>
+                  New Simulation
+                </Button>
+              </Space>
+            </Col>
+          </Row>
         </div>
       ) : (
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            commodity: formData.commodity,
-            volume: formData.volume,
-            transportMode: formData.transportMode,
-            originCountry: formData.originCountry,
-            destinationName: formData.destinationName,
-            destinationLat: formData.destinationLat,
-            destinationLng: formData.destinationLng,
-            price: formData.customFields.price,
-            weight: formData.customFields.weight,
-          }}
-        >
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            tabBarStyle={{ display: 'none' }} // Hide tab bar
-            items={[
-              {
-                key: '1',
-                label: (
-                  <span>
-                    <CompassOutlined /> Route Setup
-                  </span>
-                ),
-                children: (
-                  <>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        marginBottom: '20px',
-                      }}
-                    >
-                      <div
-                        className="tab-navigation"
-                        style={{
-                          display: 'flex',
-                          width: '100%',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '10px 0',
-                            fontWeight: 'bold',
-                            borderBottom: '2px solid #1890ff',
-                            flex: 1,
-                            textAlign: 'center',
-                          }}
-                        >
-                          <CompassOutlined style={{ marginRight: '8px' }} />
-                          Route Setup
-                        </div>
-                        <div
-                          style={{
-                            padding: '10px 0',
-                            fontWeight: 'normal',
-                            color: '#999',
-                            flex: 1,
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => setActiveTab('2')}
-                        >
-                          <SettingOutlined style={{ marginRight: '8px' }} />
-                          Transport & Settings
-                        </div>
-                      </div>
-                    </div>
+        // Simulation setup with tabs and improved horizontal layout
+        <div>
+          <Title level={4} style={{ margin: '0 0 16px 0' }}>
+            <RocketOutlined style={{ marginRight: '8px' }} />
+            Configure Trade Simulation
+          </Title>
 
-                    <div
-                      className="route-info"
-                      style={{ marginBottom: '20px' }}
-                    >
-                      <div style={{ display: 'flex', marginBottom: '12px' }}>
-                        <div style={{ flex: 1 }}>
-                          <Form.Item
-                            label={
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <EnvironmentOutlined
-                                  style={{
-                                    color: '#1890ff',
-                                    marginRight: '8px',
-                                  }}
-                                />
-                                <span>Origin</span>
-                              </div>
-                            }
-                            name="originCountry"
-                            style={{ marginBottom: '8px' }}
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              items={[
+                {
+                  key: '1',
+                  label: (
+                    <span>
+                      <GlobalOutlined /> Basic Info
+                    </span>
+                  ),
+                  children: (
+                    <Row gutter={[24, 16]}>
+                      <Col xs={24} sm={12} md={8} lg={6}>
+                        <Form.Item
+                          name="commodity"
+                          label="Commodity"
+                          rules={[
+                            {
+                              required: true,
+                              message: 'Please select a commodity',
+                            },
+                          ]}
+                        >
+                          <Select
+                            placeholder="Select a commodity"
+                            style={{ width: '100%' }}
+                            onChange={handleCommodityChange}
                           >
-                            <Select
-                              placeholder="Select origin country"
-                              onChange={handleOriginCountryChange}
-                              style={{ width: '100%' }}
-                            >
-                              {originCountries.map((country) => (
-                                <Option key={country.id} value={country.id}>
-                                  <div
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        fontSize: '16px',
-                                        marginRight: '8px',
-                                      }}
-                                    >
-                                      {country.flag}
-                                    </span>
-                                    <span>{country.name}</span>
-                                  </div>
-                                </Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                        </div>
-                        <div style={{ flex: 1, marginLeft: '12px' }}>
-                          {customDestination ? (
-                            <Form.Item
-                              label="Destination"
-                              style={{ marginBottom: '8px' }}
-                            >
-                              <Space
-                                direction="vertical"
-                                style={{ width: '100%' }}
-                              >
-                                <Input
-                                  placeholder="Destination Name"
-                                  value={formData.destinationName}
-                                  onChange={(e) =>
-                                    handleCustomDestinationChange(
-                                      'destinationName',
-                                      e.target.value
-                                    )
-                                  }
-                                />
+                            {commodities.map((commodity) => (
+                              <Option key={commodity.id} value={commodity.id}>
                                 <Space>
-                                  <InputNumber
-                                    placeholder="Latitude"
-                                    style={{ width: '100%' }}
-                                    value={formData.destinationLat}
-                                    onChange={(val) =>
-                                      handleCustomDestinationChange(
-                                        'destinationLat',
-                                        val
-                                      )
-                                    }
-                                  />
-                                  <InputNumber
-                                    placeholder="Longitude"
-                                    style={{ width: '100%' }}
-                                    value={formData.destinationLng}
-                                    onChange={(val) =>
-                                      handleCustomDestinationChange(
-                                        'destinationLng',
-                                        val
-                                      )
-                                    }
-                                  />
+                                  <span>{commodity.icon}</span>
+                                  <span>{commodity.name}</span>
                                 </Space>
-                                <Button
-                                  type="link"
-                                  onClick={() =>
-                                    handleCustomDestinationToggle(false)
-                                  }
-                                  style={{ paddingLeft: 0 }}
-                                >
-                                  Use Map Selection
-                                </Button>
-                              </Space>
-                            </Form.Item>
-                          ) : (
-                            <Form.Item
-                              label="Destination"
-                              style={{ marginBottom: '8px' }}
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} sm={12} md={8} lg={6}>
+                        <Form.Item
+                          name="originCountry"
+                          label="Origin Country"
+                          initialValue="IDN"
+                        >
+                          <Select
+                            placeholder="Select origin country"
+                            style={{ width: '100%' }}
+                            onChange={handleOriginCountryChange}
+                          >
+                            {originCountries.map((country) => (
+                              <Option key={country.id} value={country.id}>
+                                <Space>
+                                  <span>{country.flag}</span>
+                                  <span>{country.name}</span>
+                                </Space>
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} sm={12} md={8} lg={6}>
+                        <Form.Item name="volume" label="Volume (units)">
+                          <Slider
+                            min={1}
+                            max={100}
+                            defaultValue={50}
+                            onChange={handleVolumeChange}
+                            tooltip={{ formatter: (value) => `${value} units` }}
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={24}>
+                        <div style={{ marginBottom: '16px' }}>
+                          <Text strong>Destination</Text>
+                          {selectedCountry ? (
+                            <Tag
+                              color="green"
+                              style={{ marginLeft: '8px', padding: '0 8px' }}
                             >
-                              <Tag
-                                color="green"
-                                style={{
-                                  padding: '4px 12px',
-                                  fontSize: '14px',
-                                  width: '100%',
-                                  textAlign: 'center',
-                                }}
-                              >
-                                <GlobalOutlined /> {selectedCountry.name}
-                              </Tag>
-                              <Button
-                                type="link"
-                                onClick={() =>
-                                  handleCustomDestinationToggle(true)
-                                }
-                                style={{ paddingLeft: 0 }}
-                              >
-                                Use Custom Destination
-                              </Button>
-                            </Form.Item>
+                              {selectedCountry.name}
+                            </Tag>
+                          ) : (
+                            <Tag
+                              color="warning"
+                              style={{ marginLeft: '8px', padding: '0 8px' }}
+                            >
+                              Select country on map
+                            </Tag>
                           )}
                         </div>
-                      </div>
-                    </div>
+                      </Col>
 
-                    <Divider style={{ margin: '0 0 16px 0' }} />
-
-                    <Form.Item
-                      name="commodity"
-                      label={
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <ShoppingOutlined
-                            style={{ marginRight: '8px', color: '#1890ff' }}
-                          />
-                          <span>Commodity</span>
-                          <Tooltip title="Select the product you want to export">
-                            <InfoCircleOutlined
-                              style={{ marginLeft: '8px', color: '#bfbfbf' }}
-                            />
-                          </Tooltip>
-                        </div>
-                      }
-                      rules={[
-                        {
-                          required: true,
-                          message: 'Please select a commodity',
-                        },
-                      ]}
-                    >
-                      <Select
-                        placeholder="Select a commodity"
-                        onChange={handleCommodityChange}
-                        dropdownStyle={{ borderRadius: '4px' }}
-                        style={{ marginBottom: '16px' }}
-                      >
-                        {commodities.map((commodity) => (
-                          <Option key={commodity.id} value={commodity.id}>
-                            <div
-                              style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                              <span
-                                style={{ fontSize: '18px', marginRight: '8px' }}
-                              >
-                                {commodity.icon}
-                              </span>
-                              <span>{commodity.name}</span>
-                            </div>
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                      name="volume"
-                      label={
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <CalculatorOutlined
-                            style={{ marginRight: '8px', color: '#1890ff' }}
-                          />
-                          <span>Export Volume (containers)</span>
-                          <Tooltip title="Number of shipping containers">
-                            <InfoCircleOutlined
-                              style={{ marginLeft: '8px', color: '#bfbfbf' }}
-                            />
-                          </Tooltip>
-                        </div>
-                      }
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                        }}
-                      >
-                        <Slider
-                          min={1}
-                          max={100}
-                          value={formData.volume}
-                          onChange={handleVolumeChange}
-                          style={{ flex: 1 }}
-                          marks={{
-                            1: '1',
-                            25: '25',
-                            50: '50',
-                            75: '75',
-                            100: '100',
-                          }}
-                          trackStyle={{ backgroundColor: '#1890ff' }}
-                          handleStyle={{ borderColor: '#1890ff' }}
-                        />
-                        <InputNumber
-                          min={1}
-                          max={100}
-                          value={formData.volume}
-                          onChange={(value) =>
-                            handleVolumeChange(value as number)
-                          }
-                          style={{ width: '60px' }}
-                        />
-                      </div>
-                    </Form.Item>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        marginTop: '24px',
-                      }}
-                    >
-                      <Button
-                        type="primary"
-                        icon={<ArrowRightOutlined />}
-                        onClick={() => setActiveTab('2')}
-                      >
-                        Next: Transport & Settings
-                      </Button>
-                    </div>
-                  </>
-                ),
-              },
-              {
-                key: '2',
-                label: (
-                  <span>
-                    <SettingOutlined /> Transport & Settings
-                  </span>
-                ),
-                children: (
-                  <>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        marginBottom: '20px',
-                      }}
-                    >
-                      <div
-                        className="tab-navigation"
-                        style={{
-                          display: 'flex',
-                          width: '100%',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '10px 0',
-                            fontWeight: 'normal',
-                            color: '#999',
-                            flex: 1,
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => setActiveTab('1')}
-                        >
-                          <CompassOutlined style={{ marginRight: '8px' }} />
-                          Route Setup
-                        </div>
-                        <div
-                          style={{
-                            padding: '10px 0',
-                            fontWeight: 'bold',
-                            borderBottom: '2px solid #1890ff',
-                            flex: 1,
-                            textAlign: 'center',
-                          }}
-                        >
-                          <SettingOutlined style={{ marginRight: '8px' }} />
-                          Transport & Settings
-                        </div>
-                      </div>
-                    </div>
-
-                    <Form.Item
-                      name="transportMode"
-                      label={
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <span>Transport Mode</span>
-                          <Tooltip title="Choose your preferred transportation method">
-                            <InfoCircleOutlined
-                              style={{ marginLeft: '8px', color: '#bfbfbf' }}
-                            />
-                          </Tooltip>
-                        </div>
-                      }
-                    >
-                      <Radio.Group
-                        value={formData.transportMode}
-                        onChange={(e) =>
-                          handleTransportModeChange(e.target.value)
-                        }
-                        style={{ width: '100%' }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            gap: '10px',
-                            flexDirection: 'column',
-                          }}
-                        >
-                          <Radio.Button
-                            value="sea"
-                            style={{
-                              height: 'auto',
-                              padding: '8px 12px',
-                              borderRadius: '4px',
-                              width: '100%',
-                            }}
-                          >
-                            <div
-                              style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                              {transportModeInfo.sea.icon}
-                              <span
-                                style={{
-                                  marginLeft: '8px',
-                                  fontWeight: 'bold',
-                                }}
-                              >
-                                {transportModeInfo.sea.name}
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '12px',
-                                marginTop: '4px',
-                                color: '#666',
-                              }}
-                            >
-                              {transportModeInfo.sea.description}
-                            </div>
-                          </Radio.Button>
-
-                          <Radio.Button
-                            value="air"
-                            style={{
-                              height: 'auto',
-                              padding: '8px 12px',
-                              borderRadius: '4px',
-                              width: '100%',
-                            }}
-                          >
-                            <div
-                              style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                              {transportModeInfo.air.icon}
-                              <span
-                                style={{
-                                  marginLeft: '8px',
-                                  fontWeight: 'bold',
-                                }}
-                              >
-                                {transportModeInfo.air.name}
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '12px',
-                                marginTop: '4px',
-                                color: '#666',
-                              }}
-                            >
-                              {transportModeInfo.air.description}
-                            </div>
-                          </Radio.Button>
-
-                          <Radio.Button
-                            value="land"
-                            style={{
-                              height: 'auto',
-                              padding: '8px 12px',
-                              borderRadius: '4px',
-                              width: '100%',
-                            }}
-                          >
-                            <div
-                              style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                              {transportModeInfo.land.icon}
-                              <span
-                                style={{
-                                  marginLeft: '8px',
-                                  fontWeight: 'bold',
-                                }}
-                              >
-                                {transportModeInfo.land.name}
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '12px',
-                                marginTop: '4px',
-                                color: '#666',
-                              }}
-                            >
-                              {transportModeInfo.land.description}
-                            </div>
-                          </Radio.Button>
-                        </div>
-                      </Radio.Group>
-                    </Form.Item>
-
-                    <Divider style={{ margin: '8px 0 16px 0' }} />
-
-                    <div
-                      className="advanced-settings"
-                      style={{ marginBottom: '16px' }}
-                    >
-                      <Title level={5} style={{ marginBottom: '12px' }}>
-                        Advanced Settings
-                      </Title>
-                      <div style={{ display: 'flex', gap: '10px' }}>
+                      <Col span={24}>
+                        <Text type="secondary">
+                          <InfoCircleOutlined style={{ marginRight: '8px' }} />
+                          Select a destination country on the map or enter
+                          custom coordinates
+                        </Text>
+                      </Col>
+                    </Row>
+                  ),
+                },
+                {
+                  key: '2',
+                  label: (
+                    <span>
+                      <CompassOutlined /> Transport Options
+                    </span>
+                  ),
+                  children: (
+                    <Row gutter={[24, 16]}>
+                      <Col span={24}>
                         <Form.Item
-                          name="price"
-                          label="Price per Unit ($)"
-                          style={{ flex: 1, marginBottom: '0' }}
+                          name="transportMode"
+                          label="Transport Mode"
+                          initialValue="sea"
                         >
+                          <Radio.Group
+                            onChange={(e) =>
+                              handleTransportModeChange(e.target.value)
+                            }
+                            defaultValue="sea"
+                            buttonStyle="solid"
+                          >
+                            <Radio.Button value="sea">
+                              <Space>
+                                <ShipOutlined />
+                                <span>Sea Freight</span>
+                              </Space>
+                            </Radio.Button>
+                            <Radio.Button value="air">
+                              <Space>
+                                <RiseOutlined />
+                                <span>Air Freight</span>
+                              </Space>
+                            </Radio.Button>
+                            <Radio.Button value="land">
+                              <Space>
+                                <CarOutlined />
+                                <span>Land Transport</span>
+                              </Space>
+                            </Radio.Button>
+                          </Radio.Group>
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24}>
+                        <Card
+                          size="small"
+                          title={
+                            <Space>
+                              {transportModeInfo[formData.transportMode]?.icon}
+                              <span>
+                                {
+                                  transportModeInfo[formData.transportMode]
+                                    ?.name
+                                }
+                              </span>
+                            </Space>
+                          }
+                          style={{ marginBottom: '16px' }}
+                        >
+                          <Paragraph>
+                            {
+                              transportModeInfo[formData.transportMode]
+                                ?.description
+                            }
+                          </Paragraph>
+                        </Card>
+                      </Col>
+                    </Row>
+                  ),
+                },
+                {
+                  key: '3',
+                  label: (
+                    <span>
+                      <SettingOutlined /> Advanced Settings
+                    </span>
+                  ),
+                  children: (
+                    <Row gutter={[24, 16]}>
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item label="Price per Unit ($)">
                           <InputNumber
-                            min={1}
-                            max={10000}
-                            defaultValue={formData.customFields.price}
+                            style={{ width: '100%' }}
+                            defaultValue={1000}
+                            formatter={(value) =>
+                              `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            }
                             onChange={(value) =>
                               handleCustomFieldChange('price', value)
                             }
-                            style={{ width: '100%' }}
-                            prefix={<DollarOutlined />}
                           />
                         </Form.Item>
-                        <Form.Item
-                          name="weight"
-                          label="Weight per Unit (kg)"
-                          style={{ flex: 1, marginBottom: '0' }}
-                        >
+                      </Col>
+
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item label="Weight per Unit (kg)">
                           <InputNumber
-                            min={1}
-                            max={5000}
-                            defaultValue={formData.customFields.weight}
+                            style={{ width: '100%' }}
+                            defaultValue={500}
                             onChange={(value) =>
                               handleCustomFieldChange('weight', value)
                             }
-                            style={{ width: '100%' }}
                           />
                         </Form.Item>
-                      </div>
-                    </div>
+                      </Col>
+                    </Row>
+                  ),
+                },
+              ]}
+            />
 
-                    {formData.commodity && (
-                      <div
-                        className="estimates-panel"
-                        style={{ marginTop: '20px', marginBottom: '20px' }}
-                      >
-                        <Title level={5} style={{ marginBottom: '12px' }}>
-                          Preliminary Estimates
-                        </Title>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                          <div
-                            style={{
-                              flex: 1,
-                              padding: '12px',
-                              backgroundColor: '#f9f9f9',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <DollarOutlined
-                              style={{
-                                fontSize: '24px',
-                                color: '#1890ff',
-                                marginRight: '12px',
-                              }}
-                            />
-                            <div>
-                              <div style={{ fontSize: '12px', color: '#666' }}>
-                                Estimated Cost
-                              </div>
-                              <div
-                                style={{ fontSize: '18px', fontWeight: 'bold' }}
-                              >
-                                ${estimates.cost.toLocaleString()}
-                              </div>
-                            </div>
-                          </div>
-                          <div
-                            style={{
-                              flex: 1,
-                              padding: '12px',
-                              backgroundColor: '#f9f9f9',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <ClockCircleOutlined
-                              style={{
-                                fontSize: '24px',
-                                color: '#ff9800',
-                                marginRight: '12px',
-                              }}
-                            />
-                            <div>
-                              <div style={{ fontSize: '12px', color: '#666' }}>
-                                Est. Time
-                              </div>
-                              <div
-                                style={{ fontSize: '18px', fontWeight: 'bold' }}
-                              >
-                                {estimates.time} days
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            textAlign: 'center',
-                            marginTop: '8px',
-                            fontSize: '12px',
-                            color: '#666',
-                          }}
-                        >
-                          These are preliminary estimates and may vary in the
-                          final simulation
-                        </div>
-                      </div>
-                    )}
+            <Divider style={{ margin: '24px 0 16px' }} />
 
+            <div className="preliminary-estimates">
+              <Title level={5}>Preliminary Estimates</Title>
+              <Row gutter={[24, 24]}>
+                <Col xs={24} sm={12}>
+                  <Card
+                    style={{
+                      textAlign: 'center',
+                      backgroundColor: '#f9f9ff',
+                      borderRadius: '8px',
+                    }}
+                    bordered={false}
+                  >
+                    <DollarOutlined
+                      style={{
+                        fontSize: '24px',
+                        color: '#1890ff',
+                        marginBottom: '8px',
+                        display: 'block',
+                      }}
+                    />
+                    <div>Estimated Cost</div>
                     <div
-                      className="action-buttons"
-                      style={{ marginTop: '24px' }}
+                      style={{
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        margin: '8px 0',
+                      }}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          marginBottom: '16px',
-                        }}
-                      >
-                        <Button
-                          icon={<ArrowLeftOutlined />}
-                          onClick={() => setActiveTab('1')}
-                        >
-                          Back
-                        </Button>
-
-                        <Button
-                          type="primary"
-                          icon={<ArrowRightOutlined />}
-                          onClick={handleSubmit}
-                          loading={isSimulating}
-                          disabled={
-                            !formData.commodity ||
-                            (!selectedCountry && !formData.customDestination)
-                          }
-                        >
-                          Run Simulation
-                        </Button>
-                      </div>
-
-                      {simulationResults && (
-                        <Button
-                          block
-                          icon={<ReloadOutlined />}
-                          style={{ borderRadius: '6px' }}
-                          onClick={handleReset}
-                        >
-                          Reset Simulation
-                        </Button>
-                      )}
+                      ${estimates.cost.toLocaleString()}
                     </div>
-                  </>
-                ),
-              },
-            ]}
-          />
-        </Form>
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Card
+                    style={{
+                      textAlign: 'center',
+                      backgroundColor: '#fff9f9',
+                      borderRadius: '8px',
+                    }}
+                    bordered={false}
+                  >
+                    <ClockCircleOutlined
+                      style={{
+                        fontSize: '24px',
+                        color: '#ff7875',
+                        marginBottom: '8px',
+                        display: 'block',
+                      }}
+                    />
+                    <div>Est. Time</div>
+                    <div
+                      style={{
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        margin: '8px 0',
+                      }}
+                    >
+                      {estimates.time} days
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+              <div
+                style={{
+                  marginTop: '8px',
+                  fontSize: '12px',
+                  color: 'rgba(0, 0, 0, 0.45)',
+                  textAlign: 'center',
+                }}
+              >
+                These are preliminary estimates and may vary in the final
+                simulation
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: '24px',
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={handleReset}
+                style={{ marginRight: '8px' }}
+              >
+                Back
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                icon={<ArrowRightOutlined />}
+                loading={isSimulating}
+                disabled={!selectedCountry && !customDestination}
+              >
+                Run Simulation
+              </Button>
+            </div>
+          </Form>
+        </div>
       )}
     </Card>
   );

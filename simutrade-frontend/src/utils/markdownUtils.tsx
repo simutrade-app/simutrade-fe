@@ -1,6 +1,15 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
+// Define custom types for component props
+interface CodeProps {
+  node?: any;
+  inline?: boolean;
+  children?: React.ReactNode;
+  className?: string;
+  [key: string]: any;
+}
+
 /**
  * Renders markdown content with proper styling without using className
  * This avoids the error: "Unexpected `className` prop"
@@ -11,10 +20,10 @@ export const renderMarkdown = (content: string) => {
       <ReactMarkdown
         components={{
           // Style components directly with style prop instead of className
-          p: ({ node, ...props }) => (
+          p: ({ node, ...props }: any) => (
             <p style={{ margin: '0.5em 0' }} {...props} />
           ),
-          h1: ({ node, ...props }) => (
+          h1: ({ node, ...props }: any) => (
             <h1
               style={{
                 margin: '0.5em 0',
@@ -24,7 +33,7 @@ export const renderMarkdown = (content: string) => {
               {...props}
             />
           ),
-          h2: ({ node, ...props }) => (
+          h2: ({ node, ...props }: any) => (
             <h2
               style={{
                 margin: '0.5em 0',
@@ -34,7 +43,7 @@ export const renderMarkdown = (content: string) => {
               {...props}
             />
           ),
-          h3: ({ node, ...props }) => (
+          h3: ({ node, ...props }: any) => (
             <h3
               style={{
                 margin: '0.5em 0',
@@ -44,22 +53,22 @@ export const renderMarkdown = (content: string) => {
               {...props}
             />
           ),
-          ul: ({ node, ...props }) => (
+          ul: ({ node, ...props }: any) => (
             <ul
               style={{ margin: '0.5em 0', paddingLeft: '1.5em' }}
               {...props}
             />
           ),
-          ol: ({ node, ...props }) => (
+          ol: ({ node, ...props }: any) => (
             <ol
               style={{ margin: '0.5em 0', paddingLeft: '1.5em' }}
               {...props}
             />
           ),
-          li: ({ node, ...props }) => (
+          li: ({ node, ...props }: any) => (
             <li style={{ margin: '0.2em 0' }} {...props} />
           ),
-          code: ({ node, inline, ...props }) =>
+          code: ({ node, inline, ...props }: any) =>
             inline ? (
               <code
                 style={{
@@ -81,10 +90,10 @@ export const renderMarkdown = (content: string) => {
                 <code {...props} />
               </pre>
             ),
-          pre: ({ node, ...props }) => (
-            <div style={{ margin: '0.5em 0' }} {...props} />
+          pre: ({ node, ...props }: any) => (
+            <pre style={{ margin: '0.5em 0' }} {...props} />
           ),
-          a: ({ node, ...props }) => (
+          a: ({ node, ...props }: any) => (
             <a
               style={{ color: '#1890ff', textDecoration: 'none' }}
               {...props}

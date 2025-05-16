@@ -11,7 +11,15 @@ const { Content } = Layout;
 const getCountryCoordinates = (countryId: string) => {
   // In a real app, this would come from a database or API
   // For now, we'll hardcode a few countries for the demo
-  const countryCoordinates = {
+  const countryCoordinates: {
+    [key: string]: { lat: number; lng: number };
+    IDN: { lat: number; lng: number };
+    MYS: { lat: number; lng: number };
+    SGP: { lat: number; lng: number };
+    THA: { lat: number; lng: number };
+    VNM: { lat: number; lng: number };
+    PHL: { lat: number; lng: number };
+  } = {
     IDN: { lat: -6.2088, lng: 106.8456 }, // Jakarta, Indonesia
     MYS: { lat: 3.139, lng: 101.6869 }, // Kuala Lumpur, Malaysia
     SGP: { lat: 1.3521, lng: 103.8198 }, // Singapore
@@ -152,11 +160,12 @@ const PlaygroundPage: React.FC = () => {
           </Text>
         </div>
 
-        <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
-          <Col xs={24} lg={16}>
+        {/* Map Section - Full Width */}
+        <Row gutter={[0, 24]} style={{ marginBottom: '24px' }}>
+          <Col span={24}>
             <div
               style={{
-                height: '650px',
+                height: '500px',
                 width: '100%',
                 borderRadius: '12px',
                 overflow: 'hidden',
@@ -188,22 +197,23 @@ const PlaygroundPage: React.FC = () => {
               )}
             </div>
           </Col>
+        </Row>
 
-          <Col xs={24} lg={8}>
-            <div style={{ height: '650px' }}>
-              <SimulationPanel
-                selectedCountry={selectedCountry}
-                onRunSimulation={runSimulation}
-                onResetSimulation={resetSimulation}
-                isSimulating={simulating}
-                simulationResults={results}
-              />
-            </div>
+        {/* Control Panel - Full Width */}
+        <Row gutter={[0, 24]}>
+          <Col span={24}>
+            <SimulationPanel
+              selectedCountry={selectedCountry}
+              onRunSimulation={runSimulation}
+              onResetSimulation={resetSimulation}
+              isSimulating={simulating}
+              simulationResults={results}
+            />
           </Col>
         </Row>
 
         {results && (
-          <Row gutter={[24, 24]}>
+          <Row gutter={[0, 24]}>
             <Col span={24}>
               <ResultsDisplay results={results} />
             </Col>

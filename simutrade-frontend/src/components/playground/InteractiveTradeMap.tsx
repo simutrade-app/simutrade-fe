@@ -255,7 +255,7 @@ const RouteAnimation = ({
             color: '#FF9800', // Orange for land
             weight: 4,
             opacity: 0.8,
-            dashArray: null,
+            dashArray: undefined,
           };
         default:
           return {

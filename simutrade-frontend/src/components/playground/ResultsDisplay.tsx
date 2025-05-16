@@ -97,7 +97,12 @@ const TransportModeLabel = ({ mode }: { mode: string }) => {
 };
 
 // Modern progress bar component
-const ModernProgressBar = ({ percent, color }) => {
+interface ModernProgressBarProps {
+  percent: number;
+  color: string;
+}
+
+const ModernProgressBar = ({ percent, color }: ModernProgressBarProps) => {
   return (
     <div style={{ width: '100%', marginTop: '8px' }}>
       <div
@@ -447,392 +452,199 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
 
   return (
     <Card
-      title={
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <CheckCircleOutlined
-              style={{ color: '#52c41a', marginRight: '8px', fontSize: '18px' }}
-            />
-            <span style={{ fontSize: '16px', fontWeight: '500' }}>
-              Simulation Results
-            </span>
-          </div>
-          <TransportModeLabel mode={transportMode} />
-        </div>
-      }
-      className="results-card"
-      bordered={false}
       style={{
+        marginTop: '24px',
         borderRadius: '12px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
       }}
-      extra={
-        <Button
-          icon={<DownloadOutlined />}
-          type="primary"
-          ghost
-          style={{ borderRadius: '6px' }}
-        >
-          Export Results
-        </Button>
-      }
+      bordered={false}
     >
-      {/* KPI Cards */}
-      <Row gutter={[24, 24]} style={{ marginBottom: '28px' }}>
-        {/* Trade Efficiency Score */}
+      <Row gutter={[24, 24]}>
         <Col xs={24} md={8}>
-          <Card
-            className="metric-card"
-            bordered={false}
-            style={{
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              borderRadius: '12px',
-              padding: '4px',
-              height: '100%',
-            }}
-          >
-            <div style={{ padding: '12px 16px' }}>
+          <div className="score-display" style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ThunderboltOutlined style={{ marginRight: '8px' }} />
+              Trade Efficiency Score
+            </div>
+            <div
+              style={{
+                width: '160px',
+                height: '160px',
+                margin: '0 auto',
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: '50%',
+                background: `conic-gradient(${getScoreColor(
+                  results.tradeEfficiencyScore
+                )} ${
+                  (results.tradeEfficiencyScore / 100) * 360
+                }deg, #f5f5f5 0deg)`,
+                boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
+              }}
+            >
               <div
                 style={{
+                  width: '140px',
+                  height: '140px',
+                  borderRadius: '50%',
+                  backgroundColor: 'white',
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '10px',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
                 }}
               >
-                <Text
-                  strong
-                  style={{ fontSize: '16px', color: 'rgba(0,0,0,0.85)' }}
-                >
-                  Trade Efficiency Score
-                </Text>
                 <div
                   style={{
-                    background: getScoreColor(results.tradeEfficiencyScore),
-                    color: 'white',
+                    fontSize: '48px',
                     fontWeight: 'bold',
-                    borderRadius: '16px',
-                    padding: '2px 12px',
-                    fontSize: '14px',
-                  }}
-                >
-                  {getEfficiencyGrade(results.tradeEfficiencyScore)}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <Tooltip title="Score is calculated based on route optimization, cost efficiency, and regulatory compliance">
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: '13px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <InfoCircleOutlined style={{ marginRight: '5px' }} />
-                    Overall trade route efficiency
-                  </Text>
-                </Tooltip>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  marginBottom: '10px',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: '38px',
-                    fontWeight: 'bold',
+                    lineHeight: '1',
                     color: getScoreColor(results.tradeEfficiencyScore),
-                    lineHeight: 1,
                   }}
                 >
                   {results.tradeEfficiencyScore}
-                </Text>
-                <Text
+                </div>
+                <div
                   style={{
-                    color: 'rgba(0,0,0,0.45)',
-                    marginLeft: '4px',
-                    marginBottom: '6px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: getScoreColor(results.tradeEfficiencyScore),
                   }}
                 >
-                  / 100
+                  Grade: {getEfficiencyGrade(results.tradeEfficiencyScore)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Col>
+
+        <Col xs={24} md={16}>
+          <Row gutter={[16, 16]}>
+            <Col span={24}>
+              <div style={{ marginBottom: '8px' }}>
+                <Title level={5} style={{ margin: 0 }}>
+                  Simulation Results
+                </Title>
+                <Text type="secondary">
+                  Based on your selected parameters and market conditions
                 </Text>
               </div>
+            </Col>
 
-              <ModernProgressBar
-                percent={results.tradeEfficiencyScore}
-                color={getScoreColor(results.tradeEfficiencyScore)}
+            <Col xs={24} sm={8}>
+              <Card
+                size="small"
+                style={{
+                  textAlign: 'center',
+                  backgroundColor: 'rgba(24, 144, 255, 0.05)',
+                  height: '100%',
+                }}
+                bordered={false}
+              >
+                <TransportModeLabel mode={transportMode} />
+                <div style={{ fontSize: '14px', marginTop: '8px' }}>
+                  Transport Mode
+                </div>
+              </Card>
+            </Col>
+
+            <Col xs={24} sm={8}>
+              <Card
+                size="small"
+                style={{
+                  textAlign: 'center',
+                  backgroundColor: 'rgba(82, 196, 26, 0.05)',
+                  height: '100%',
+                }}
+                bordered={false}
+              >
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                  ${results.costEstimate.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '14px' }}>Total Cost</div>
+              </Card>
+            </Col>
+
+            <Col xs={24} sm={8}>
+              <Card
+                size="small"
+                style={{
+                  textAlign: 'center',
+                  backgroundColor: 'rgba(250, 173, 20, 0.05)',
+                  height: '100%',
+                }}
+                bordered={false}
+              >
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                  {results.timeEstimate} days
+                </div>
+                <div style={{ fontSize: '14px' }}>Delivery Time</div>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row style={{ marginTop: '16px' }}>
+            <Col span={24}>
+              <Tabs
+                defaultActiveKey="1"
+                onChange={setActiveTabKey}
+                items={[
+                  {
+                    key: '1',
+                    label: (
+                      <span>
+                        <ThunderboltOutlined /> Recommendations
+                      </span>
+                    ),
+                    children: formatRecommendations(),
+                  },
+                  {
+                    key: '2',
+                    label: (
+                      <span>
+                        <WarningOutlined /> Risk Assessment
+                      </span>
+                    ),
+                    children: formatRiskAssessment(),
+                  },
+                  {
+                    key: '3',
+                    label: (
+                      <span>
+                        <FileTextOutlined /> Documentation
+                      </span>
+                    ),
+                    children: formatExportDocuments(),
+                  },
+                ]}
               />
-            </div>
-          </Card>
-        </Col>
-
-        {/* Estimated Cost */}
-        <Col xs={24} md={8}>
-          <Card
-            className="metric-card"
-            bordered={false}
-            style={{
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              borderRadius: '12px',
-              padding: '4px',
-              height: '100%',
-            }}
-          >
-            <div style={{ padding: '12px 16px' }}>
-              <div style={{ marginBottom: '10px' }}>
-                <Text
-                  strong
-                  style={{ fontSize: '16px', color: 'rgba(0,0,0,0.85)' }}
-                >
-                  Estimated Cost
-                </Text>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <Tooltip title="Costs include shipping, insurance, customs duties, and handling fees">
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: '13px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <InfoCircleOutlined style={{ marginRight: '5px' }} />
-                    Total export operation costs
-                  </Text>
-                </Tooltip>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(24,144,255,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: '16px',
-                  }}
-                >
-                  <DollarOutlined
-                    style={{ fontSize: '20px', color: '#1890ff' }}
-                  />
-                </div>
-                <div>
-                  <Text
-                    style={{
-                      fontSize: '28px',
-                      fontWeight: 'bold',
-                      color: '#1890ff',
-                      lineHeight: 1,
-                    }}
-                  >
-                    ${results.costEstimate.toLocaleString()}
-                  </Text>
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: '13px',
-                      display: 'block',
-                      marginTop: '4px',
-                    }}
-                  >
-                    Includes taxes and customs fees
-                  </Text>
-                </div>
-              </div>
-
-              <ModernProgressBar percent={70} color="#1890ff" />
-            </div>
-          </Card>
-        </Col>
-
-        {/* Estimated Time */}
-        <Col xs={24} md={8}>
-          <Card
-            className="metric-card"
-            bordered={false}
-            style={{
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              borderRadius: '12px',
-              padding: '4px',
-              height: '100%',
-            }}
-          >
-            <div style={{ padding: '12px 16px' }}>
-              <div style={{ marginBottom: '10px' }}>
-                <Text
-                  strong
-                  style={{ fontSize: '16px', color: 'rgba(0,0,0,0.85)' }}
-                >
-                  Estimated Time
-                </Text>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <Tooltip title="Includes processing, transit, and customs clearance time">
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: '13px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <InfoCircleOutlined style={{ marginRight: '5px' }} />
-                    Total delivery timeline
-                  </Text>
-                </Tooltip>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(250,140,22,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: '16px',
-                  }}
-                >
-                  <ClockCircleOutlined
-                    style={{ fontSize: '20px', color: '#fa8c16' }}
-                  />
-                </div>
-                <div>
-                  <Text
-                    style={{
-                      fontSize: '28px',
-                      fontWeight: 'bold',
-                      color: '#fa8c16',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {results.timeEstimate} days
-                  </Text>
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: '13px',
-                      display: 'block',
-                      marginTop: '4px',
-                    }}
-                  >
-                    Door-to-door delivery time
-                  </Text>
-                </div>
-              </div>
-
-              <ModernProgressBar percent={60} color="#fa8c16" />
-            </div>
-          </Card>
+            </Col>
+          </Row>
         </Col>
       </Row>
 
-      <Divider style={{ margin: '8px 0 24px 0' }} />
-
-      {/* Tabs for detailed information */}
-      <Tabs
-        activeKey={activeTabKey}
-        onChange={setActiveTabKey}
-        size="large"
-        className="results-tabs"
-        items={[
-          {
-            key: '1',
-            label: (
-              <span>
-                <ThunderboltOutlined /> AI Recommendations
-              </span>
-            ),
-            children: formatRecommendations(),
-          },
-          {
-            key: '2',
-            label: (
-              <span>
-                <WarningOutlined /> Risk Assessment
-              </span>
-            ),
-            children: formatRiskAssessment(),
-          },
-          {
-            key: '3',
-            label: (
-              <span>
-                <FileTextOutlined /> Export Documents
-              </span>
-            ),
-            children: formatExportDocuments(),
-          },
-        ]}
-      />
-
-      <style jsx>{`
-        .results-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
-          color: #1890ff;
-          font-weight: 500;
-        }
-        .results-tabs .ant-tabs-ink-bar {
-          background-color: #1890ff;
-          height: 3px;
-          border-radius: 3px;
-        }
-        .results-tabs .ant-tabs-nav-list {
-          width: 100%;
-          display: flex;
-        }
-        .results-tabs .ant-tabs-tab {
-          flex: 1;
-          display: flex;
-          justify-content: center;
-          margin: 0 8px;
-        }
-        .results-tabs .ant-tabs-tab:first-child {
-          margin-left: 0;
-        }
-        .results-tabs .ant-tabs-tab:last-child {
-          margin-right: 0;
-        }
-        .metric-card {
-          transition: all 0.2s;
-        }
-        .metric-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-        }
-      `}</style>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '16px',
+          marginTop: '24px',
+        }}
+      >
+        <Button icon={<DownloadOutlined />}>Export Report</Button>
+        <Button icon={<PrinterOutlined />}>Print</Button>
+      </div>
     </Card>
   );
 };

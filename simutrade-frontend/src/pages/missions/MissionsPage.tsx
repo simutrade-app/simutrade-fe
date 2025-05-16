@@ -957,30 +957,38 @@ const MissionsPage: React.FC = () => {
 
       {/* Standalone Generate New Missions Section */}
       <div className="container mx-auto px-6 pt-5 pb-10">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 text-left max-w-full">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            Need more challenges?
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Let our AI create custom trade missions tailored to your skill level
-            and interests.
-          </p>
-          <div className="text-right">
-            <button
-              onClick={generateMissionsFromAI}
-              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Generating...
-                </>
-              ) : (
-                <>Generate New Missions</>
-              )}
-            </button>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Match the layout structure of the content above */}
+          <div className="w-full lg:w-2/3">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5 text-left">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                Need more challenges?
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Let our AI create custom trade missions tailored to your skill
+                level and interests.
+              </p>
+              <div className="text-right">
+                <button
+                  onClick={generateMissionsFromAI}
+                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Generating...
+                    </>
+                  ) : (
+                    <>Generate New Missions</>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* Empty div to maintain layout structure */}
+          <div className="w-full lg:w-1/3"></div>
         </div>
       </div>
 

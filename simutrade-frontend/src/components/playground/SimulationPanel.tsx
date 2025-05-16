@@ -17,6 +17,7 @@ import {
   Tabs,
   Row,
   Col,
+  message,
 } from 'antd';
 import {
   ArrowRightOutlined,
@@ -155,6 +156,15 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
     },
   });
 
+  // State to track completion of each tab
+  const [tabCompletionStatus, setTabCompletionStatus] = useState<{
+    [key: string]: boolean;
+  }>({
+    '1': false, // Basic Info
+    '2': true, // Transport Options (has defaults)
+    '3': false, // Advanced Settings (will depend on others or specific fields)
+  });
+
   // Calculate estimated metrics based on current form values
   const [estimates, setEstimates] = useState({
     cost: 0,
@@ -208,15 +218,61 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
     return 10; // Default
   };
 
-  // Reset form when country changes
+  // Function to check if Tab 1 (Basic Info) is complete
+  const isBasicInfoTabComplete = () => {
+    const commoditySelected = !!formData.commodity;
+    let destinationSelected = false;
+    if (formData.customDestination) {
+      destinationSelected =
+        !!formData.destinationName &&
+        formData.destinationLat !== null &&
+        formData.destinationLng !== null;
+    } else {
+      destinationSelected = !!selectedCountry;
+    }
+    return commoditySelected && destinationSelected;
+  };
+
+  // Function to check if Tab 2 (Transport Options) is complete (always true due to defaults)
+  const isTransportOptionsTabComplete = () => {
+    return !!formData.transportMode; // Has a default
+  };
+
+  // Function to check if Tab 3 (Advanced Settings) is complete
+  // For now, let's say it's complete if the previous tabs are.
+  // This can be expanded with specific field checks if needed.
+  const isAdvancedSettingsTabComplete = () => {
+    return tabCompletionStatus['1'] && tabCompletionStatus['2'];
+  };
+
+  // Update tab completion status whenever formData or selectedCountry changes
   useEffect(() => {
-    if (!selectedCountry) {
+    setTabCompletionStatus((prevStatus) => ({
+      ...prevStatus,
+      '1': isBasicInfoTabComplete(),
+      '2': isTransportOptionsTabComplete(),
+      // '3' will be updated when other tabs are complete or based on its own fields
+    }));
+  }, [formData, selectedCountry, customDestination]);
+
+  // Update Tab 3 completion when Tab 1 or Tab 2 completion changes
+  useEffect(() => {
+    setTabCompletionStatus((prevStatus) => ({
+      ...prevStatus,
+      '3': isAdvancedSettingsTabComplete(),
+    }));
+  }, [tabCompletionStatus['1'], tabCompletionStatus['2']]);
+
+  // Reset form and tab completion when country changes or simulation is reset
+  useEffect(() => {
+    if (!selectedCountry && !simulationResults) {
+      // Also reset if simulationResults are cleared
       form.resetFields();
       setFormData({
         commodity: null,
         volume: 50,
         transportMode: 'sea',
-        originCountry: 'IDN', // default to Indonesia
+        originCountry: 'IDN',
         customDestination: false,
         destinationCountry: null,
         destinationName: '',
@@ -227,8 +283,27 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           weight: 500,
         },
       });
+      setCustomDestination(false); // Reset custom destination flag
+      setActiveTab('1'); // Go back to the first tab
+      setTabCompletionStatus({ '1': false, '2': true, '3': false });
+    } else if (selectedCountry && !formData.customDestination) {
+      // If a country is selected on the map, and not using custom destination,
+      // update form data with selected country's details
+      form.setFieldsValue({
+        destinationName: selectedCountry.name,
+        // Assuming selectedCountry has lat/lng. Adjust if structure is different.
+        destinationLat: selectedCountry.lat,
+        destinationLng: selectedCountry.lng,
+      });
+      setFormData((prevData) => ({
+        ...prevData,
+        destinationName: selectedCountry.name,
+        destinationLat: selectedCountry.lat,
+        destinationLng: selectedCountry.lng,
+        destinationCountry: selectedCountry.iso, // Assuming iso is the country code
+      }));
     }
-  }, [selectedCountry, form]);
+  }, [selectedCountry, form, simulationResults]);
 
   const handleCommodityChange = (value: number) => {
     setFormData({ ...formData, commodity: value });
@@ -275,439 +350,555 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       ...formData,
       [field]: value,
     });
+    form.setFieldsValue({ [field]: value });
   };
 
   const handleSubmit = () => {
-    if (!form) return;
-
-    // Check if we have a valid destination (either selected or custom)
-    if (!selectedCountry && !formData.customDestination) {
-      return;
-    }
-
     form
       .validateFields()
       .then(() => {
-        // Add the transport mode info and estimates to the simulation data
+        // Construct the data to be passed for simulation
         const simulationData = {
           ...formData,
           estimatedCost: estimates.cost,
           estimatedTime: estimates.time,
-          transportMode: formData.transportMode,
-          originCountry: formData.originCountry,
-          // Use custom destination if enabled, otherwise use the selected country
-          destination: formData.customDestination
+          // Ensure destination details are correctly passed
+          destination: customDestination
             ? {
                 name: formData.destinationName,
                 lat: formData.destinationLat,
                 lng: formData.destinationLng,
               }
-            : selectedCountry,
+            : selectedCountry
+              ? {
+                  name: selectedCountry.name,
+                  lat: selectedCountry.lat,
+                  lng: selectedCountry.lng,
+                  iso: selectedCountry.iso,
+                }
+              : null,
         };
         onRunSimulation(simulationData);
       })
-      .catch((error) => {
-        console.error('Validation failed:', error);
+      .catch((info) => {
+        console.log('Validate Failed:', info);
+        // Optionally, find the first tab with errors and switch to it
+        if (info.errorFields.length > 0) {
+          const firstErrorFieldPath = info.errorFields[0].name.join('');
+          if (formItemsTabMapping[firstErrorFieldPath]) {
+            setActiveTab(formItemsTabMapping[firstErrorFieldPath]);
+            message.error(
+              'Please complete all required fields in the current tab.'
+            );
+          } else {
+            message.error('Please complete all required fields.');
+          }
+        }
       });
   };
 
   const handleReset = () => {
-    if (!form) return;
-
-    form.resetFields();
-    onResetSimulation();
-    setFormData({
-      commodity: null,
-      volume: 50,
-      transportMode: 'sea',
-      originCountry: 'IDN', // default to Indonesia
-      customDestination: false,
-      destinationCountry: null,
-      destinationName: '',
-      destinationLat: null,
-      destinationLng: null,
-      customFields: {
-        price: 1000,
-        weight: 500,
-      },
-    });
+    onResetSimulation(); // This will trigger the useEffect to reset form and states
+    // The useEffect for selectedCountry will handle resetting form and activeTab
   };
 
-  // Find the selected origin country object
+  // Define which form items belong to which tab for error navigation
+  const formItemsTabMapping: { [key: string]: string } = {
+    commodity: '1',
+    originCountry: '1',
+    destinationName: '1',
+    destinationLat: '1',
+    destinationLng: '1',
+    transportMode: '2',
+    // Add other form items from Tab 3 if they have validation
+  };
+
   const getSelectedOriginCountry = () => {
-    return (
-      originCountries.find(
-        (country) => country.id === formData.originCountry
-      ) || originCountries[0]
-    );
+    return originCountries.find((c) => c.id === formData.originCountry);
   };
+
+  const handleTabChange = (key: string) => {
+    // Prevent changing tab if current tab is not complete (optional, for stricter flow)
+    // if (!tabCompletionStatus[activeTab] && parseInt(key) > parseInt(activeTab)) {
+    //   message.error('Please complete the current tab before proceeding.');
+    //   return;
+    // }
+    setActiveTab(key);
+  };
+
+  const handleNextTab = () => {
+    if (!tabCompletionStatus[activeTab]) {
+      message.error(
+        'Please complete all required fields in the current tab before proceeding.'
+      );
+      // Trigger validation for the current tab to show error messages
+      form
+        .validateFields()
+        .then(() => {}) // Should not happen if tab is incomplete
+        .catch(() => {}); // Errors will be displayed by Ant Form
+      return;
+    }
+    const currentTabIndex = parseInt(activeTab, 10);
+    if (currentTabIndex < 3) {
+      setActiveTab((currentTabIndex + 1).toString());
+    }
+  };
+
+  const handlePrevTab = () => {
+    const currentTabIndex = parseInt(activeTab, 10);
+    if (currentTabIndex > 1) {
+      setActiveTab((currentTabIndex - 1).toString());
+    }
+  };
+
+  const isRunSimulationDisabled = Object.values(tabCompletionStatus).some(
+    (status) => !status
+  );
+
+  // Tab Content
+  const tabItems = [
+    {
+      key: '1',
+      label: (
+        <Space>
+          <ShoppingOutlined />
+          Basic Info
+          {tabCompletionStatus['1'] ? (
+            <Tag color="green">Completed</Tag>
+          ) : (
+            <Tag color="blue">Pending</Tag>
+          )}
+        </Space>
+      ),
+      children: (
+        <Form form={form} layout="vertical" initialValues={formData}>
+          <Title level={5} style={{ marginBottom: '16px' }}>
+            Trade Details
+          </Title>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="commodity"
+                label="Commodity"
+                rules={[
+                  { required: true, message: 'Please select a commodity' },
+                ]}
+              >
+                <Select
+                  placeholder="Select a commodity"
+                  onChange={handleCommodityChange}
+                  value={formData.commodity}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option?.children
+                      ?.toString()
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                >
+                  {commodities.map((com) => (
+                    <Option key={com.id} value={com.id}>
+                      {com.icon} {com.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="originCountry"
+                label="Origin Country"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  value={formData.originCountry}
+                  onChange={handleOriginCountryChange}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option?.children
+                      ?.toString()
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                >
+                  {originCountries.map((country) => (
+                    <Option key={country.id} value={country.id}>
+                      {country.flag} {country.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="volume" label="Volume (units)">
+            <Slider
+              min={1}
+              max={1000}
+              onChange={handleVolumeChange}
+              value={formData.volume}
+              marks={{ 1: '1', 500: '500', 1000: '1000' }}
+            />
+          </Form.Item>
+
+          <Divider />
+          <Title level={5} style={{ marginBottom: '16px' }}>
+            Destination
+          </Title>
+          <Form.Item>
+            <Radio.Group
+              onChange={(e) => handleCustomDestinationToggle(e.target.value)}
+              value={customDestination}
+            >
+              <Radio value={false}>Select destination country on map</Radio>
+              <Radio value={true}>Enter custom coordinates</Radio>
+            </Radio.Group>
+          </Form.Item>
+
+          {customDestination ? (
+            <>
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="destinationName"
+                    label="Destination Name / Port"
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Please enter destination name',
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder="e.g., Port of Rotterdam"
+                      value={formData.destinationName}
+                      onChange={(e) =>
+                        handleCustomDestinationChange(
+                          'destinationName',
+                          e.target.value
+                        )
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="destinationLat"
+                    label="Latitude"
+                    rules={[
+                      { required: true, message: 'Please enter latitude' },
+                    ]}
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      placeholder="e.g., 51.9498"
+                      value={formData.destinationLat}
+                      onChange={(value) =>
+                        handleCustomDestinationChange('destinationLat', value)
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="destinationLng"
+                    label="Longitude"
+                    rules={[
+                      { required: true, message: 'Please enter longitude' },
+                    ]}
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      placeholder="e.g., 4.1349"
+                      value={formData.destinationLng}
+                      onChange={(value) =>
+                        handleCustomDestinationChange('destinationLng', value)
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </>
+          ) : (
+            <Paragraph>
+              {selectedCountry ? (
+                <Tag color="blue" icon={<EnvironmentOutlined />}>
+                  Selected on map: {selectedCountry.name} ({selectedCountry.iso}
+                  )
+                </Tag>
+              ) : (
+                <Text type="secondary">
+                  Please select a destination country on the interactive map
+                  above.
+                </Text>
+              )}
+            </Paragraph>
+          )}
+        </Form>
+      ),
+    },
+    {
+      key: '2',
+      label: (
+        <Space>
+          <CompassOutlined />
+          Transport Options
+          {tabCompletionStatus['2'] ? (
+            <Tag color="green">Completed</Tag>
+          ) : (
+            <Tag color="blue">Pending</Tag>
+          )}
+        </Space>
+      ),
+      children: (
+        <Form form={form} layout="vertical" initialValues={formData}>
+          <Title level={5} style={{ marginBottom: '16px' }}>
+            Select Transport Mode
+          </Title>
+          <Form.Item name="transportMode">
+            <Radio.Group
+              onChange={(e) => handleTransportModeChange(e.target.value)}
+              value={formData.transportMode}
+              optionType="button"
+              buttonStyle="solid"
+              style={{ width: '100%', display: 'flex' }}
+            >
+              {Object.entries(transportModeInfo).map(([key, mode]) => (
+                <Radio.Button
+                  key={key}
+                  value={key}
+                  style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    height: 'auto',
+                    minHeight: '120px',
+                    padding: '16px 8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Space direction="vertical" align="center" size={4}>
+                    {mode.icon}
+                    <Text
+                      strong
+                      style={{
+                        color:
+                          formData.transportMode === key ? 'white' : 'inherit',
+                      }}
+                    >
+                      {mode.name}
+                    </Text>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: '12px',
+                        color:
+                          formData.transportMode === key
+                            ? 'rgba(255,255,255,0.85)'
+                            : 'inherit',
+                        whiteSpace: 'normal',
+                        lineHeight: '1.3',
+                      }}
+                    >
+                      {mode.description}
+                    </Text>
+                  </Space>
+                </Radio.Button>
+              ))}
+            </Radio.Group>
+          </Form.Item>
+          {/* Add other transport options here */}
+        </Form>
+      ),
+    },
+    {
+      key: '3',
+      label: (
+        <Space>
+          <SettingOutlined />
+          Advanced Settings
+          {tabCompletionStatus['3'] ? (
+            <Tag color="green">Completed</Tag>
+          ) : (
+            <Tag color="blue">Pending</Tag>
+          )}
+        </Space>
+      ),
+      children: (
+        <Form form={form} layout="vertical" initialValues={formData}>
+          <Title level={5} style={{ marginBottom: '16px' }}>
+            Customize Simulation Parameters (Optional)
+          </Title>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Base Item Price (per unit)">
+                <InputNumber
+                  addonBefore="$"
+                  style={{ width: '100%' }}
+                  value={formData.customFields.price}
+                  onChange={(value) => handleCustomFieldChange('price', value)}
+                  min={0}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Item Weight (kg per unit)">
+                <InputNumber
+                  addonAfter="kg"
+                  style={{ width: '100%' }}
+                  value={formData.customFields.weight}
+                  onChange={(value) => handleCustomFieldChange('weight', value)}
+                  min={0}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Paragraph type="secondary">
+            These values help refine cost and logistic calculations. If unsure,
+            leave them as default.
+          </Paragraph>
+          {/* Add more advanced settings here */}
+        </Form>
+      ),
+    },
+  ];
 
   return (
     <Card
-      className="simulation-panel"
-      style={{
-        height: 'auto',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-      }}
-      bordered={false}
-    >
-      {simulationResults ? (
-        // Active simulation view with more horizontal layout
-        <div>
-          <Row gutter={[24, 24]} align="middle" justify="space-between">
-            <Col xs={24} md={12}>
-              <Space direction="vertical" size="small">
-                <Title level={4} style={{ margin: 0 }}>
-                  <RocketOutlined style={{ marginRight: '8px' }} />
-                  Active Simulation
-                </Title>
-                <Text type="secondary">
-                  {getSelectedOriginCountry()?.flag || '🌏'}{' '}
-                  {getSelectedOriginCountry()?.name || 'Unknown'} to{' '}
-                  {selectedCountry?.name || 'Selected Destination'}
-                </Text>
-              </Space>
-            </Col>
-            <Col xs={24} md={12} style={{ textAlign: 'right' }}>
-              <Space>
-                <Button onClick={handleReset} icon={<ReloadOutlined />}>
-                  New Simulation
-                </Button>
-              </Space>
-            </Col>
-          </Row>
-        </div>
-      ) : (
-        // Simulation setup with tabs and improved horizontal layout
-        <div>
-          <Title level={4} style={{ margin: '0 0 16px 0' }}>
-            <RocketOutlined style={{ marginRight: '8px' }} />
+      title={
+        <Space>
+          <CalculatorOutlined />
+          <Title level={4} style={{ margin: 0 }}>
             Configure Trade Simulation
           </Title>
+        </Space>
+      }
+      style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderRadius: '12px' }}
+    >
+      <Tabs
+        activeKey={activeTab}
+        onChange={handleTabChange}
+        tabPosition="top" // Or "left"
+        items={tabItems}
+      />
+      <Divider />
 
-          <Form form={form} layout="vertical" onFinish={handleSubmit}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={[
-                {
-                  key: '1',
-                  label: (
-                    <span>
-                      <GlobalOutlined /> Basic Info
-                    </span>
-                  ),
-                  children: (
-                    <Row gutter={[24, 16]}>
-                      <Col xs={24} sm={12} md={8} lg={6}>
-                        <Form.Item
-                          name="commodity"
-                          label="Commodity"
-                          rules={[
-                            {
-                              required: true,
-                              message: 'Please select a commodity',
-                            },
-                          ]}
-                        >
-                          <Select
-                            placeholder="Select a commodity"
-                            style={{ width: '100%' }}
-                            onChange={handleCommodityChange}
-                          >
-                            {commodities.map((commodity) => (
-                              <Option key={commodity.id} value={commodity.id}>
-                                <Space>
-                                  <span>{commodity.icon}</span>
-                                  <span>{commodity.name}</span>
-                                </Space>
-                              </Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
-                      </Col>
+      {/* Preliminary Estimates */}
+      <Row gutter={24} style={{ marginBottom: '24px', marginTop: '24px' }}>
+        <Col xs={24} md={12}>
+          <Card
+            bordered={false}
+            style={{
+              background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)',
+              borderRadius: '8px',
+              textAlign: 'center',
+            }}
+          >
+            <Space direction="vertical" align="center">
+              <DollarOutlined style={{ fontSize: '32px', color: '#1890ff' }} />
+              <Text style={{ fontSize: '16px', color: '#595959' }}>
+                Estimated Cost
+              </Text>
+              <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
+                ${estimates.cost.toLocaleString()}
+              </Title>
+            </Space>
+          </Card>
+        </Col>
+        <Col xs={24} md={12}>
+          <Card
+            bordered={false}
+            style={{
+              background: 'linear-gradient(135deg, #fff1f0 0%, #ffccc7 100%)',
+              borderRadius: '8px',
+              textAlign: 'center',
+            }}
+          >
+            <Space direction="vertical" align="center">
+              <ClockCircleOutlined
+                style={{ fontSize: '32px', color: '#f5222d' }}
+              />
+              <Text style={{ fontSize: '16px', color: '#595959' }}>
+                Est. Time
+              </Text>
+              <Title level={2} style={{ margin: 0, color: '#f5222d' }}>
+                {estimates.time} days
+              </Title>
+            </Space>
+          </Card>
+        </Col>
+      </Row>
+      <Paragraph
+        type="secondary"
+        style={{ textAlign: 'center', marginBottom: '24px' }}
+      >
+        These are preliminary estimates and may vary in the final simulation.
+      </Paragraph>
 
-                      <Col xs={24} sm={12} md={8} lg={6}>
-                        <Form.Item
-                          name="originCountry"
-                          label="Origin Country"
-                          initialValue="IDN"
-                        >
-                          <Select
-                            placeholder="Select origin country"
-                            style={{ width: '100%' }}
-                            onChange={handleOriginCountryChange}
-                          >
-                            {originCountries.map((country) => (
-                              <Option key={country.id} value={country.id}>
-                                <Space>
-                                  <span>{country.flag}</span>
-                                  <span>{country.name}</span>
-                                </Space>
-                              </Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
-                      </Col>
+      <Space
+        style={{
+          width: '100%',
+          justifyContent: 'space-between',
+          marginTop: '20px',
+          alignItems: 'center',
+        }}
+      >
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={handlePrevTab}
+          disabled={activeTab === '1'}
+        >
+          Back
+        </Button>
 
-                      <Col xs={24} sm={12} md={8} lg={6}>
-                        <Form.Item name="volume" label="Volume (units)">
-                          <Slider
-                            min={1}
-                            max={100}
-                            defaultValue={50}
-                            onChange={handleVolumeChange}
-                            tooltip={{ formatter: (value) => `${value} units` }}
-                          />
-                        </Form.Item>
-                      </Col>
-
-                      <Col xs={24} md={24}>
-                        <div style={{ marginBottom: '16px' }}>
-                          <Text strong>Destination</Text>
-                          {selectedCountry ? (
-                            <Tag
-                              color="green"
-                              style={{ marginLeft: '8px', padding: '0 8px' }}
-                            >
-                              {selectedCountry.name}
-                            </Tag>
-                          ) : (
-                            <Tag
-                              color="warning"
-                              style={{ marginLeft: '8px', padding: '0 8px' }}
-                            >
-                              Select country on map
-                            </Tag>
-                          )}
-                        </div>
-                      </Col>
-
-                      <Col span={24}>
-                        <Text type="secondary">
-                          <InfoCircleOutlined style={{ marginRight: '8px' }} />
-                          Select a destination country on the map or enter
-                          custom coordinates
-                        </Text>
-                      </Col>
-                    </Row>
-                  ),
-                },
-                {
-                  key: '2',
-                  label: (
-                    <span>
-                      <CompassOutlined /> Transport Options
-                    </span>
-                  ),
-                  children: (
-                    <Row gutter={[24, 16]}>
-                      <Col span={24}>
-                        <Form.Item
-                          name="transportMode"
-                          label="Transport Mode"
-                          initialValue="sea"
-                        >
-                          <Radio.Group
-                            onChange={(e) =>
-                              handleTransportModeChange(e.target.value)
-                            }
-                            defaultValue="sea"
-                            buttonStyle="solid"
-                          >
-                            <Radio.Button value="sea">
-                              <Space>
-                                <ShipOutlined />
-                                <span>Sea Freight</span>
-                              </Space>
-                            </Radio.Button>
-                            <Radio.Button value="air">
-                              <Space>
-                                <RiseOutlined />
-                                <span>Air Freight</span>
-                              </Space>
-                            </Radio.Button>
-                            <Radio.Button value="land">
-                              <Space>
-                                <CarOutlined />
-                                <span>Land Transport</span>
-                              </Space>
-                            </Radio.Button>
-                          </Radio.Group>
-                        </Form.Item>
-                      </Col>
-
-                      <Col xs={24}>
-                        <Card
-                          size="small"
-                          title={
-                            <Space>
-                              {transportModeInfo[formData.transportMode]?.icon}
-                              <span>
-                                {
-                                  transportModeInfo[formData.transportMode]
-                                    ?.name
-                                }
-                              </span>
-                            </Space>
-                          }
-                          style={{ marginBottom: '16px' }}
-                        >
-                          <Paragraph>
-                            {
-                              transportModeInfo[formData.transportMode]
-                                ?.description
-                            }
-                          </Paragraph>
-                        </Card>
-                      </Col>
-                    </Row>
-                  ),
-                },
-                {
-                  key: '3',
-                  label: (
-                    <span>
-                      <SettingOutlined /> Advanced Settings
-                    </span>
-                  ),
-                  children: (
-                    <Row gutter={[24, 16]}>
-                      <Col xs={24} sm={12} md={6}>
-                        <Form.Item label="Price per Unit ($)">
-                          <InputNumber
-                            style={{ width: '100%' }}
-                            defaultValue={1000}
-                            formatter={(value) =>
-                              `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                            }
-                            onChange={(value) =>
-                              handleCustomFieldChange('price', value)
-                            }
-                          />
-                        </Form.Item>
-                      </Col>
-
-                      <Col xs={24} sm={12} md={6}>
-                        <Form.Item label="Weight per Unit (kg)">
-                          <InputNumber
-                            style={{ width: '100%' }}
-                            defaultValue={500}
-                            onChange={(value) =>
-                              handleCustomFieldChange('weight', value)
-                            }
-                          />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-                  ),
-                },
-              ]}
-            />
-
-            <Divider style={{ margin: '24px 0 16px' }} />
-
-            <div className="preliminary-estimates">
-              <Title level={5}>Preliminary Estimates</Title>
-              <Row gutter={[24, 24]}>
-                <Col xs={24} sm={12}>
-                  <Card
-                    style={{
-                      textAlign: 'center',
-                      backgroundColor: '#f9f9ff',
-                      borderRadius: '8px',
-                    }}
-                    bordered={false}
-                  >
-                    <DollarOutlined
-                      style={{
-                        fontSize: '24px',
-                        color: '#1890ff',
-                        marginBottom: '8px',
-                        display: 'block',
-                      }}
-                    />
-                    <div>Estimated Cost</div>
-                    <div
-                      style={{
-                        fontSize: '28px',
-                        fontWeight: 'bold',
-                        margin: '8px 0',
-                      }}
-                    >
-                      ${estimates.cost.toLocaleString()}
-                    </div>
-                  </Card>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Card
-                    style={{
-                      textAlign: 'center',
-                      backgroundColor: '#fff9f9',
-                      borderRadius: '8px',
-                    }}
-                    bordered={false}
-                  >
-                    <ClockCircleOutlined
-                      style={{
-                        fontSize: '24px',
-                        color: '#ff7875',
-                        marginBottom: '8px',
-                        display: 'block',
-                      }}
-                    />
-                    <div>Est. Time</div>
-                    <div
-                      style={{
-                        fontSize: '28px',
-                        fontWeight: 'bold',
-                        margin: '8px 0',
-                      }}
-                    >
-                      {estimates.time} days
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
-              <div
-                style={{
-                  marginTop: '8px',
-                  fontSize: '12px',
-                  color: 'rgba(0, 0, 0, 0.45)',
-                  textAlign: 'center',
-                }}
-              >
-                These are preliminary estimates and may vary in the final
-                simulation
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: '24px',
-                display: 'flex',
-                justifyContent: 'space-between',
-              }}
+        {activeTab !== '3' ? (
+          <Button
+            type="primary"
+            icon={<ArrowRightOutlined />}
+            onClick={handleNextTab}
+            disabled={!tabCompletionStatus[activeTab]}
+          >
+            Next
+          </Button>
+        ) : (
+          <Space>
+            <Button
+              type="primary"
+              icon={<RocketOutlined />}
+              onClick={handleSubmit}
+              loading={isSimulating}
+              disabled={isRunSimulationDisabled || isSimulating}
+              style={{ minWidth: '150px' }}
             >
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={handleReset}
-                style={{ marginRight: '8px' }}
-              >
-                Back
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                icon={<ArrowRightOutlined />}
-                loading={isSimulating}
-                disabled={!selectedCountry && !customDestination}
-              >
-                Run Simulation
-              </Button>
-            </div>
-          </Form>
+              {isSimulating ? 'Simulating...' : 'Run Simulation'}
+            </Button>
+            <Button
+              danger
+              icon={<ReloadOutlined />}
+              onClick={handleReset}
+              disabled={isSimulating}
+            >
+              Reset Simulation
+            </Button>
+          </Space>
+        )}
+      </Space>
+
+      {simulationResults && (
+        <div style={{ marginTop: '24px' }}>
+          <Title level={5}>Last Simulation Summary</Title>
+          <Paragraph>
+            Transport Mode: {simulationResults.transportMode} <br />
+            Origin: {simulationResults.originCountry} <br />
+            Destination: {simulationResults.destination?.name || 'N/A'}
+          </Paragraph>
+          <Button onClick={handleReset} icon={<ReloadOutlined />} danger>
+            Clear Results & Reset Form
+          </Button>
         </div>
       )}
     </Card>

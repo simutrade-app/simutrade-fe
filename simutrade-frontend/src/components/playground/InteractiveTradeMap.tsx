@@ -11,22 +11,10 @@ import {
 
 // Custom icons for transport mode
 
-// Extend the Default interface to include _getIconUrl
-declare module 'leaflet' {
-  namespace Icon {
-    interface Default {
-      _getIconUrl?: string;
-    }
-  }
-  // It's better to extend LatLngLiteral or LatLng to ensure lat/lng properties
-  interface LatLngLiteral {
-    lat: number;
-    lng: number;
-  }
-}
+// Leaflet type extensions are no longer needed here with the revised icon setup.
 
 // Needed to fix Leaflet icons in production builds
-delete L.Icon.Default.prototype._getIconUrl;
+// delete L.Icon.Default.prototype._getIconUrl; // This line is often problematic with TypeScript
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -168,26 +156,31 @@ const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
     map.setMinZoom(2);
     map.setMaxZoom(7);
 
-    // Restrict panning to avoid seeing the blank area
-    // Use smaller bounds to prevent white space at poles
-    const southWest = L.latLng(-65, -180);
-    const northEast = L.latLng(85, 180);
+    // Define the bounds for panning and fitting
+    // Adjusted latitudes to potentially improve fitting and reduce polar white space.
+    const southWest = L.latLng(-60, -180);
+    const northEast = L.latLng(80, 180);
     const bounds = L.latLngBounds(southWest, northEast);
 
     map.setMaxBounds(bounds);
 
-    // Handle bounds on drag events
+    // Fit the map to these bounds initially.
+    // This will select an appropriate zoom level (not less than minZoom)
+    // and center the map to display the specified bounds as best as possible.
+    map.fitBounds(bounds);
+
+    // Handle bounds on drag events to prevent dragging outside
     map.on('drag', () => {
       map.panInsideBounds(bounds, { animate: false });
     });
 
-    // Make sure the map is properly sized to the container
+    // Make sure the map is properly sized to the container after initial setup
     setTimeout(() => {
       map.invalidateSize();
     }, 100);
 
-    // Set initial view
-    map.setView([20, 0], 2);
+    // Remove explicit setView as fitBounds now handles the initial view.
+    // map.setView([20, 0], 2);
   }, [map]);
 
   // Add marker and focus map when selected country changes
@@ -433,16 +426,18 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
 
   useEffect(() => {
     // Fetch GeoJSON data of countries
+    console.log('[Debug Map] Attempting to fetch GeoJSON data...'); // Log: Start fetch
     fetch(
       'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson'
     )
       .then((response) => response.json())
       .then((data) => {
+        console.log('[Debug Map] GeoJSON data fetched successfully:', data); // Log: Fetch success + data
         setCountriesGeoJSON(data);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error loading GeoJSON:', error);
+        console.error('[Debug Map] Error loading GeoJSON:', error); // Log: Fetch error
         setLoading(false);
       });
   }, []);
@@ -478,8 +473,65 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   };
 
   const onEachFeature = (feature: GeoJSON.Feature, layer: L.Layer) => {
-    const countryName = feature.properties?.ADMIN;
+    // Conditional logging for problematic features
+    if (
+      feature &&
+      feature.properties &&
+      feature.properties.ADMIN === undefined &&
+      feature.properties.ISO_A3 === undefined
+    ) {
+      console.log(
+        '[Debug Problematic Feature Props]:',
+        JSON.parse(JSON.stringify(feature.properties))
+      );
+    }
+
+    const countryName =
+      feature.properties?.ADMIN ||
+      feature.properties?.NAME ||
+      feature.properties?.SOVEREIGNT ||
+      feature.properties?.['name:en'] || // OSM common tag for English name
+      feature.properties?.int_name || // OSM common tag for international name
+      feature.properties?.official_name || // Try official_name (often long)
+      feature.properties?.['official_name:en']; // Try official_name:en (often long)
+
     const countryCode = feature.properties?.ISO_A3;
+    const countryCodeA2 = feature.properties?.ISO_A2;
+
+    let displayName = 'Unknown Region';
+    if (countryName && String(countryName).trim() !== '') {
+      displayName = String(countryName).trim();
+    } else if (countryCode && String(countryCode).trim() !== '') {
+      displayName = `Region (${String(countryCode).trim()})`;
+    } else if (countryCodeA2 && String(countryCodeA2).trim() !== '') {
+      displayName = `Region (${String(countryCodeA2).trim()})`;
+    } else {
+      // This else block means all specific name properties and ISO codes were falsy or empty strings
+      // displayName remains 'Unknown Region'
+      // The initial log of feature.properties should cover the debugging need here.
+    }
+
+    // Conditional detailed log for problematic features
+    if (
+      feature &&
+      feature.properties &&
+      feature.properties.ADMIN === undefined &&
+      feature.properties.ISO_A3 === undefined
+    ) {
+      console.log('[Debug Name Decision for Problematic Feature]:', {
+        rawAdmin: feature.properties?.ADMIN,
+        rawName: feature.properties?.NAME,
+        rawSovereignt: feature.properties?.SOVEREIGNT,
+        rawNameEn: feature.properties?.['name:en'],
+        rawIntName: feature.properties?.int_name,
+        rawOfficialName: feature.properties?.official_name,
+        rawOfficialNameEn: feature.properties?.['official_name:en'],
+        derivedCountryName: countryName,
+        countryCodeA3: countryCode,
+        countryCodeA2: countryCodeA2,
+        finalDisplayName: displayName,
+      });
+    }
 
     // Skip for Indonesia (origin country)
     if (countryCode === 'IDN') {
@@ -487,7 +539,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
     }
 
     // Add tooltips
-    layer.bindTooltip(countryName || 'Unknown Country', {
+    layer.bindTooltip(displayName, {
       permanent: false,
       direction: 'center',
       className: 'country-tooltip',
@@ -501,7 +553,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
         const center = bounds.getCenter();
 
         onCountrySelect({
-          name: countryName || 'Unknown Country',
+          name: displayName, // Use the determined displayName
           iso: countryCode || 'N/A',
           lat: center.lat,
           lng: center.lng,
@@ -524,6 +576,14 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
     });
   };
 
+  // Log component state before rendering
+  console.log(
+    '[Debug Map] Rendering. Loading:',
+    loading,
+    'GeoJSON Data:',
+    countriesGeoJSON ? 'Data Loaded' : 'No Data'
+  );
+
   if (loading) {
     return (
       <div
@@ -543,7 +603,9 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   }
 
   return (
-    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+    <div
+      style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
+    >
       <MapContainer
         center={L.latLng(20, 0)}
         zoom={2}
@@ -551,7 +613,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
           height: '100%',
           width: '100%',
           minHeight: '550px',
-          background: '#f8f9fa',
+          background: '#a2d9ff',
           borderRadius: '12px',
         }}
         zoomControl={false}
@@ -596,7 +658,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
           padding: '12px',
           borderRadius: '8px',
           boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-          zIndex: 1000,
+          zIndex: 999,
           fontSize: '12px',
         }}
       >

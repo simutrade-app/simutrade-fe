@@ -263,3 +263,71 @@
     width: 180px;
   }
 }
+
+/* SimulationPanel Styles */
+.simulation-panel
+  .ant-select:not(.ant-select-disabled):hover
+  .ant-select-selector {
+  border-color: #1890ff;
+}
+
+.simulation-panel
+  .ant-select-focused:not(.ant-select-disabled)
+  .ant-select-selector {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.simulation-panel .ant-btn-primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+.simulation-panel .ant-btn-primary:hover {
+  background-color: #096dd9;
+  border-color: #096dd9;
+}
+
+.simulation-panel .ant-input:focus,
+.simulation-panel .ant-input-number-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.simulation-panel .tab-navigation {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.simulation-panel .ant-radio-button-wrapper-checked {
+  border-color: #1890ff !important;
+  background: #e6f7ff;
+}
+
+/* Custom navigation styles */
+.simulation-panel .tab-navigation .active-tab {
+  color: #1890ff;
+  border-bottom: 2px solid #1890ff;
+}
+
+.simulation-panel .tab-navigation .inactive-tab {
+  color: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.simulation-panel .tab-navigation .inactive-tab:hover {
+  color: #1890ff;
+}
+
+/* Ensure proper alignment for buttons */
+.simulation-panel .action-buttons {
+  margin-top: 24px;
+}
+
+/* Custom radio button styling */
+.simulation-panel .ant-radio-button-wrapper {
+  transition: all 0.3s;
+}
+
+.simulation-panel .ant-radio-button-wrapper:hover {
+  border-color: #1890ff;
+}

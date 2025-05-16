@@ -17,6 +17,7 @@ const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const OAuthCallbackPage = lazy(() => import('@/pages/auth/OAuthCallbackPage'));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
+const PlaygroundPage = lazy(() => import('@/pages/playground/PlaygroundPage'));
 
 // Fallback loading component
 const LoadingFallback = () => {
@@ -101,6 +102,18 @@ const AppRoutes: React.FC = () => {
             path="settings"
             element={<div>Settings Page (Coming Soon)</div>}
           />
+        </Route>
+        
+        {/* Playground Route */}
+        <Route
+          path="/playground"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<PlaygroundPage />} />
         </Route>
 
         {/* 404 Not Found Route */}

@@ -176,7 +176,7 @@ const PlaygroundPage: React.FC = () => {
                   <Spin
                     size="large"
                     tip="Loading world map..."
-                    fullScreen={false}
+                    fullscreen={false}
                   />
                 </div>
               ) : (

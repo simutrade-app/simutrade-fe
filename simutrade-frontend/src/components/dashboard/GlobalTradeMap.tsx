@@ -22,6 +22,15 @@ const tradeHotspots: TradeHotspot[] = [
   { id: 8, location: [55.7558, 37.6173], name: 'Moscow', value: 2200 },
 ];
 
+// Extend the Default interface to include _getIconUrl
+declare module 'leaflet' {
+  namespace Icon {
+    interface Default {
+      _getIconUrl?: string;
+    }
+  }
+}
+
 const GlobalTradeMap: React.FC = () => {
   // Fix for the Leaflet icon issue
   useEffect(() => {
@@ -46,7 +55,7 @@ const GlobalTradeMap: React.FC = () => {
     >
       <div style={{ height: '100%', width: '100%', minHeight: '350px' }}>
         <MapContainer
-          center={[20, 0]}
+          center={L.latLng(20, 0)}
           zoom={2}
           style={{ height: '100%', width: '100%', minHeight: '350px' }}
           scrollWheelZoom={false}
@@ -58,14 +67,16 @@ const GlobalTradeMap: React.FC = () => {
           {tradeHotspots.map((hotspot) => (
             <CircleMarker
               key={hotspot.id}
-              center={hotspot.location}
+              center={L.latLng(hotspot.location[0], hotspot.location[1])}
+              pathOptions={{
+                fillOpacity: 0.7,
+                fillColor: '#1890ff',
+                color: '#fff',
+                weight: 1,
+              }}
               radius={Math.sqrt(hotspot.value) / 10}
-              fillOpacity={0.7}
-              fillColor="#1890ff"
-              color="#fff"
-              weight={1}
             >
-              <Tooltip permanent={false}>
+              <Tooltip>
                 <div>
                   <strong>{hotspot.name}</strong>
                   <div>Trade Volume: ${hotspot.value.toLocaleString()}</div>

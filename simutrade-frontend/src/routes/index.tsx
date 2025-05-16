@@ -18,6 +18,9 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const OAuthCallbackPage = lazy(() => import('@/pages/auth/OAuthCallbackPage'));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const PlaygroundPage = lazy(() => import('@/pages/playground/PlaygroundPage'));
+const StrategiesPage = lazy(() => import('@/pages/strategies/StrategiesPage'));
+// Import from the directory instead of the specific file
+const MissionsPage = lazy(() => import('@/pages/missions'));
 
 // Fallback loading component
 const LoadingFallback = () => {
@@ -103,7 +106,7 @@ const AppRoutes: React.FC = () => {
             element={<div>Settings Page (Coming Soon)</div>}
           />
         </Route>
-        
+
         {/* Playground Route */}
         <Route
           path="/playground"
@@ -114,6 +117,30 @@ const AppRoutes: React.FC = () => {
           }
         >
           <Route index element={<PlaygroundPage />} />
+        </Route>
+
+        {/* Strategies Route */}
+        <Route
+          path="/strategies"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<StrategiesPage />} />
+        </Route>
+
+        {/* Missions Route */}
+        <Route
+          path="/missions"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<MissionsPage />} />
         </Route>
 
         {/* 404 Not Found Route */}

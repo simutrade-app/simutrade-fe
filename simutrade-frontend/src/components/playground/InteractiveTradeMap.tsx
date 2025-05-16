@@ -15,6 +15,15 @@ const ShipOutlined = () => <span style={{ fontSize: '16px' }}>🚢</span>;
 const RiseOutlined = () => <span style={{ fontSize: '16px' }}>✈️</span>;
 const CarOutlined = () => <span style={{ fontSize: '16px' }}>🚚</span>;
 
+// Extend the Default interface to include _getIconUrl
+declare module 'leaflet' {
+  namespace Icon {
+    interface Default {
+      _getIconUrl?: string;
+    }
+  }
+}
+
 // Needed to fix Leaflet icons in production builds
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -56,8 +65,8 @@ const CustomZoomControl = () => {
           });
 
           // Remove existing marker if any
-          map.eachLayer((layer) => {
-            if (layer._currentLocation) {
+          map.eachLayer((layer: L.Layer) => {
+            if ((layer as any)._currentLocation) {
               map.removeLayer(layer);
             }
           });
@@ -65,7 +74,7 @@ const CustomZoomControl = () => {
           const marker = L.marker([latitude, longitude], {
             icon: currentLocationIcon,
           });
-          marker._currentLocation = true;
+          (marker as any)._currentLocation = true;
           marker.addTo(map).bindPopup('Your current location').openPopup();
         },
         (error) => {
@@ -141,7 +150,11 @@ const CustomZoomControl = () => {
 };
 
 // Map Initializer component to set center, zoom limits, etc.
-const MapInitializer = ({ destination }) => {
+interface MapInitializerProps {
+  destination: { lat: number; lng: number; name?: string } | null;
+}
+
+const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
   const map = useMap();
 
   useEffect(() => {
@@ -181,8 +194,8 @@ const MapInitializer = ({ destination }) => {
       });
 
       // Remove existing destination marker if any
-      map.eachLayer((layer) => {
-        if (layer._destinationMarker) {
+      map.eachLayer((layer: L.Layer) => {
+        if ((layer as any)._destinationMarker) {
           map.removeLayer(layer);
         }
       });
@@ -190,19 +203,19 @@ const MapInitializer = ({ destination }) => {
       const marker = L.marker([destination.lat, destination.lng], {
         icon: destinationIcon,
       });
-      marker._destinationMarker = true;
+      (marker as any)._destinationMarker = true;
       marker
         .addTo(map)
-        .bindPopup(`Destination: ${destination.name}`)
+        .bindPopup(`Destination: ${destination.name || 'Selected Location'}`)
         .openPopup();
 
       // Focus the map on the marker
       map.flyTo([destination.lat, destination.lng], 4, {
         animate: true,
-        duration: 1,
+        duration: 1.5,
       });
     }
-  }, [map, destination]);
+  }, [destination, map]);
 
   return null;
 };
@@ -496,7 +509,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
           width: '100%',
         }}
       >
-        <Spin size="large" tip="Loading map data..." fullScreen={false} />
+        <Spin size="large" tip="Loading map data..." fullscreen={false} />
       </div>
     );
   }
@@ -504,7 +517,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   return (
     <div style={{ height: '100%', width: '100%', position: 'relative' }}>
       <MapContainer
-        center={[20, 0]}
+        center={L.latLng(20, 0)}
         zoom={2}
         style={{
           height: '100%',

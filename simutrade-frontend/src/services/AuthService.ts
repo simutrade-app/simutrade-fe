@@ -45,26 +45,39 @@ const apiRequest = async (
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log(
+        'Using auth token in AuthService:',
+        token.substring(0, 15) + '...'
+      );
+    } else {
+      console.warn('No auth token found for AuthService API request');
     }
 
     const options = {
       method,
       headers,
       data: data ? JSON.stringify(data) : undefined,
+      withCredentials: true,
     };
 
     const response = await axios(url, options);
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error) && error.response) {
+      console.error(
+        `AuthService API Error (${error.response.status}):`,
+        error.response.data
+      );
       return error.response.data;
     } else if (error instanceof Error) {
+      console.error('AuthService API Error:', error.message);
       return {
         status: 'error',
         message: error.message || 'Network error',
         data: {},
       };
     } else {
+      console.error('Unknown AuthService API Error');
       return {
         status: 'error',
         message: 'An unknown error occurred',
@@ -273,6 +286,7 @@ export const loginUser = async (
       role: 'user',
     };
     localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+    console.log('Stored mock user data:', userData);
 
     // Handle remember me feature
     if (rememberMe) {
@@ -293,36 +307,66 @@ export const loginUser = async (
     };
   } else {
     // Real API implementation
-    const response = await apiRequest('/user/auth/email/login', 'POST', {
-      email,
-      password,
-    });
+    try {
+      const url = `${API_URL}/user/auth/email/login`;
+      const headers = { 'Content-Type': 'application/json' };
+      const requestBody = { email, password };
+      const response = await axios.post(url, requestBody, {
+        headers,
+        withCredentials: true,
+      });
 
-    // If login successful, store token and user data
-    if (response.status === 'success' && response.data?.token) {
-      localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
+      // If login successful, store token and user data
+      if (response.data.status === 'success' && response.data.data?.token) {
+        const token = response.data.data.token;
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+        console.log(
+          'Token stored successfully:',
+          token.substring(0, 15) + '...'
+        );
 
-      // For real API, we would typically decode the JWT or make a separate API call
-      // to get user details. Here we'll just store minimal info.
-      const userData = {
-        id: 'unknown', // Would normally come from JWT or profile API
-        email: response.data.email,
-        name: response.data.email.split('@')[0],
-        role: 'user',
-      };
-      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+        // For real API, we would typically decode the JWT or make a separate API call
+        // to get user details
+        const userData = {
+          id: response.data.data.id || 'unknown',
+          email: response.data.data.email || email,
+          name: response.data.data.name || email.split('@')[0],
+          role: response.data.data.role || 'user',
+        };
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+        console.log('User data stored:', userData);
 
-      // Handle remember me feature
-      if (rememberMe) {
-        localStorage.setItem(REMEMBER_ME_KEY, 'true');
-        localStorage.setItem(SAVED_EMAIL_KEY, email);
-        localStorage.setItem(SAVED_PASSWORD_KEY, password); // In a real app, storing passwords is not recommended
+        // Handle remember me feature
+        if (rememberMe) {
+          localStorage.setItem(REMEMBER_ME_KEY, 'true');
+          localStorage.setItem(SAVED_EMAIL_KEY, email);
+          localStorage.setItem(SAVED_PASSWORD_KEY, password); // In a real app, storing passwords is not recommended
+        } else {
+          clearSavedCredentials();
+        }
       } else {
-        clearSavedCredentials();
+        console.warn('Login response missing token:', response.data);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Login error:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        return error.response.data;
+      } else if (error instanceof Error) {
+        return {
+          status: 'error',
+          message: error.message || 'Network error or unexpected issue',
+          data: {},
+        };
+      } else {
+        return {
+          status: 'error',
+          message: 'An unknown error occurred during login',
+          data: {},
+        };
       }
     }
-
-    return response;
   }
 };
 

@@ -12,8 +12,7 @@ import {
   KeyOutlined,
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { getCurrentUser } from '@/services/AuthService';
+import { getCurrentUser, logoutUser } from '@/services/AuthService';
 import type { MenuProps } from 'antd';
 
 const { Header: AntHeader } = Layout;
@@ -28,7 +27,6 @@ interface Notification {
 }
 
 const DashboardHeader: React.FC = () => {
-  const { logout } = useAuth();
   const [searchValue, setSearchValue] = useState<string>('');
   const [userData, setUserData] = useState<any>(null);
 
@@ -149,7 +147,7 @@ const DashboardHeader: React.FC = () => {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: 'Logout',
-      onClick: logout,
+      onClick: logoutUser,
       danger: true,
     },
   ];

@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AIService from '../../services/AIService';
+import type {
+  TradeOpportunity,
+  ChatData,
+  ChatResponse,
+} from '../../services/AIService';
 import ChatDetail from '../../components/strategies/ChatDetail';
-import ReactMarkdown from 'react-markdown';
+import '../../styles/opportunity-map.css';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -18,14 +23,31 @@ import {
   FaMap,
   FaRobot,
   FaGripLinesVertical,
-  FaUser,
+  FaInfoCircle,
 } from 'react-icons/fa';
-import type { ChatData } from '../../services/AIService';
+
+// Import the ApiChatData interface we need
+interface ApiChatData {
+  _id: string;
+  query: string;
+  response: ChatResponse[];
+  context_used?: string[];
+  createdTime?: string;
+}
 
 // Define interfaces for our chat data
 interface ChatResponseItem {
   text?: string;
   _id?: string;
+  videoMetadata?: Record<string, unknown>;
+  thought?: Record<string, unknown>;
+  inlineData?: Record<string, unknown>;
+  codeExecutionResult?: Record<string, unknown>;
+  executableCode?: Record<string, unknown>;
+  fileData?: Record<string, unknown>;
+  functionCall?: Record<string, unknown>;
+  functionResponse?: Record<string, unknown>;
+  opportunities?: TradeOpportunity[];
 }
 
 interface ChatItem {
@@ -34,15 +56,23 @@ interface ChatItem {
   createdAt?: string;
   query: string;
   response?: ChatResponseItem[];
+  chatHistory?: ChatItem[]; // Chat history items - recursive definition
+  sessionId?: string; // Session ID for the chat
+  context_used?: string[]; // Context used for grounding responses
 }
 
+// Define the API response structure for chat session
+/* These interfaces might be removed since we now use types from AIService,
+ * but keeping them for reference until the migration is complete
+ */
+
 const SUGGESTED_QUESTIONS = [
-  'What are the major trade trends in 2023?',
-  'How are supply chains being affected by recent geopolitical events?',
-  'What strategies are effective for entering the European market?',
-  'What documentation is needed for exporting to Japan?',
-  'How can I optimize my logistics costs for international shipping?',
-  'What are common mistakes first-time exporters make?',
+  'What are the top trade opportunities in Southeast Asia in 2025?',
+  'Which countries offer the best opportunities for agricultural exports?',
+  'What are the most promising sectors for trade with China?',
+  'Where are the growing opportunities for renewable energy investments?',
+  'What are the best countries for exporting automotive parts?',
+  'Identify emerging market opportunities in South America',
 ];
 
 const LANGUAGES = [
@@ -66,6 +96,10 @@ const StrategiesPage: React.FC = () => {
   const [currentLanguage, setCurrentLanguage] = useState(LANGUAGES[0]);
   const [isListening, setIsListening] = useState(false);
   const [mapZoom, setMapZoom] = useState(5); // Default zoom level for Google Maps
+  const [opportunities, setOpportunities] = useState<TradeOpportunity[]>([]);
+  const [selectedOpportunity, setSelectedOpportunity] =
+    useState<TradeOpportunity | null>(null);
+  const [mapLoading, setMapLoading] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mapRef = useRef<HTMLIFrameElement>(null);
@@ -80,7 +114,10 @@ const StrategiesPage: React.FC = () => {
   const [isResizingChat, setIsResizingChat] = useState(false);
 
   // Map coordinates and parameters
-  const [mapCenter] = useState({ lat: -2.42959445, lng: 115.14567645 });
+  const [mapCenter, setMapCenter] = useState({
+    lat: -2.42959445,
+    lng: 115.14567645,
+  });
 
   // Load chat history on mount
   useEffect(() => {
@@ -143,14 +180,26 @@ const StrategiesPage: React.FC = () => {
     setHistoryLoading(true);
     try {
       const response = await AIService.getAllChats();
+      console.log('Response from getAllChats:', response);
+
       if (response.status === 'success' && response.data?.chatData) {
         const sortedChats = [...response.data.chatData].sort((a, b) => {
+          // Try to use createdAt first if available
+          if (a.createdAt && b.createdAt) {
+            return (
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          }
+          // Fall back to _id as a secondary sort method
           const timestampA = parseInt(a._id.substring(0, 8), 16);
           const timestampB = parseInt(b._id.substring(0, 8), 16);
           return timestampB - timestampA;
         });
+
+        console.log('Sorted chats for display:', sortedChats);
         setChats(sortedChats);
       } else {
+        console.error('No chat data found in response:', response);
         showNotification('Failed to load chat history', 'error');
       }
     } catch (error) {
@@ -165,9 +214,81 @@ const StrategiesPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await AIService.getChatById(chatId);
+      console.log('getChatById response:', response);
+
       if (response.status === 'success' && response.data) {
-        setSelectedChat(response.data);
+        // Check if the response matches our ChatSessionResponse type
+        const chatData = response.data;
+
+        // For debugging purposes
+        console.log('Chat data received:', chatData);
+        if (chatData.chatHistory) {
+          console.log(
+            'Chat history directly in response:',
+            chatData.chatHistory.length
+          );
+        }
+
+        // Check if this is a session with chatData array
+        if (
+          'chatData' in chatData &&
+          Array.isArray(chatData.chatData) &&
+          chatData.chatData.length > 0
+        ) {
+          console.log(
+            'Processing response as a chat session with',
+            chatData.chatData.length,
+            'messages'
+          );
+
+          // Use the first message as the main chat
+          const mainChat = chatData.chatData[0];
+          // Use the rest as chat history
+          const chatHistory = chatData.chatData.slice(1);
+
+          // Combine them into our expected format
+          const formattedChat: ChatItem = {
+            _id: chatData._id,
+            query: mainChat.query,
+            response: mainChat.response || [],
+            context_used: mainChat.context_used || [],
+            createdAt: mainChat.createdTime,
+            sessionId: chatId, // Store the original session ID
+            chatHistory: chatHistory.map((chat: ApiChatData) => ({
+              _id:
+                chat._id ||
+                `history-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+              query: chat.query,
+              response: chat.response || [],
+              context_used: chat.context_used || [],
+              createdAt: chat.createdTime,
+            })),
+          };
+
+          console.log('Formatted chat with history:', formattedChat);
+          console.log(
+            'History items in formattedChat:',
+            formattedChat.chatHistory?.length || 0
+          );
+
+          setSelectedChat(formattedChat);
+        }
+        // If it has a query and response fields directly, it's probably a single chat
+        else if (chatData.query) {
+          console.log('Processing response as a single chat');
+          console.log(
+            'Chat history in single chat:',
+            chatData.chatHistory?.length || 0
+          );
+          setSelectedChat(chatData as ChatItem);
+        }
+        // If we can't determine the format, just use as is
+        else {
+          console.warn('Unknown response format, using as-is');
+          setSelectedChat(response.data as unknown as ChatItem);
+        }
       } else {
+        console.error('Failed to load chat details:', response);
         showNotification('Failed to load chat details', 'error');
       }
     } catch (error) {
@@ -184,13 +305,99 @@ const StrategiesPage: React.FC = () => {
     setMessage('');
     setLoading(true);
 
+    // Create a temporary chat with skeleton loading state
+    if (selectedChat) {
+      // Update existing chat with pending message
+      const updatedChat = {
+        ...selectedChat,
+        // Save current chat state in history
+        chatHistory: [
+          ...(selectedChat.chatHistory || []),
+          // Only add the current chat to history if it has responses
+          // This prevents adding empty skeleton messages to history
+          ...(selectedChat.response &&
+          selectedChat.response.length > 0 &&
+          selectedChat.response[0].text
+            ? [
+                {
+                  _id: selectedChat._id,
+                  query: selectedChat.query,
+                  response: selectedChat.response || [],
+                  context_used: selectedChat.context_used || [],
+                },
+              ]
+            : []),
+        ],
+        // Update the main query and show skeleton response
+        query,
+        response: [{ text: '', _id: `temp-skeleton-${Date.now()}` }],
+      };
+      setSelectedChat(updatedChat);
+    } else {
+      // Create a new chat with skeleton loading
+      const tempChat = {
+        _id: `temp-${Date.now()}`,
+        query,
+        response: [{ text: '', _id: `temp-skeleton-${Date.now()}` }],
+      };
+      setSelectedChat(tempChat as ChatItem);
+    }
+
     try {
-      const response = await AIService.createChat(query);
-      if (response.status === 'success' && response.data) {
-        setSelectedChat(response.data);
-        setSelectedChatId(response.data._id);
-        await loadChatHistory();
+      let response;
+      console.log(
+        'Sending message:',
+        query,
+        selectedChatId ? `to existing chat ${selectedChatId}` : 'as new chat'
+      );
+
+      if (selectedChatId) {
+        // For existing chats, make sure we're using the session ID
+        let chatIdToUse = selectedChatId;
+
+        // Check if this is a chat with a sessionId property
+        if (selectedChat && selectedChat.sessionId) {
+          // Use the session ID instead of the chat ID
+          chatIdToUse = selectedChat.sessionId;
+          console.log(
+            `Using session ID ${chatIdToUse} instead of chat ID ${selectedChatId}`
+          );
+        }
+
+        // Update existing chat with the appropriate ID
+        response = await AIService.updateChat(chatIdToUse, query);
       } else {
+        // Create new chat
+        response = await AIService.createChat(query);
+      }
+
+      console.log('Chat API response:', response);
+
+      if (response.status === 'success' && response.data) {
+        // Determine the ID to use for subsequent operations
+        // For existing chats, continue using the selectedChatId (which might be a sessionId)
+        // For new chats, use the _id from the response
+        const chatIdToUse = selectedChatId || response.data._id;
+
+        // Update selectedChatId if needed
+        if (!selectedChatId && response.data._id) {
+          console.log('Setting selected chat ID to:', response.data._id);
+          setSelectedChatId(response.data._id as string);
+        }
+
+        // Reload chat history first to ensure we have the latest data
+        await loadChatHistory();
+
+        // Then load the updated chat detail
+        if (chatIdToUse) {
+          console.log('Loading chat detail with ID:', chatIdToUse);
+          await loadChatDetail(chatIdToUse as string);
+        } else {
+          console.warn('No chatId available for loadChatDetail');
+          setSelectedChat(response.data as unknown as ChatItem);
+        }
+      } else {
+        console.error('Failed response from chat API:', response);
         showNotification('Failed to send message', 'error');
       }
     } catch (error) {
@@ -289,9 +496,335 @@ const StrategiesPage: React.FC = () => {
     );
   };
 
-  // Build Google Maps URL with appropriate parameters
+  // Update map with opportunities when selected chat changes
+  useEffect(() => {
+    if (selectedChat?.response && selectedChat.response.length > 0) {
+      const chatResponse = selectedChat.response[0];
+
+      if (
+        chatResponse?.opportunities &&
+        chatResponse.opportunities.length > 0
+      ) {
+        console.log(
+          'Found opportunities in chat response:',
+          chatResponse.opportunities
+        );
+        setOpportunities(chatResponse.opportunities);
+
+        // If there are opportunities, center map on first one
+        if (chatResponse.opportunities.length > 0) {
+          const firstOpp = chatResponse.opportunities[0];
+          setMapCenter({ lat: firstOpp.lat, lng: firstOpp.lng });
+
+          // Show map if it's currently collapsed
+          if (mapCollapsed) {
+            setMapCollapsed(false);
+          }
+        }
+      } else if (chatResponse?.text) {
+        // If no opportunities in response, but we have text, try to extract opportunities
+        console.log(
+          'No opportunities found, trying to extract from response text'
+        );
+        setMapLoading(true);
+
+        AIService.extractOpportunities(chatResponse.text)
+          .then((extractedOpportunities) => {
+            if (extractedOpportunities.length > 0) {
+              console.log('Extracted opportunities:', extractedOpportunities);
+              setOpportunities(extractedOpportunities);
+
+              // Center map on first opportunity
+              const firstOpp = extractedOpportunities[0];
+              setMapCenter({ lat: firstOpp.lat, lng: firstOpp.lng });
+
+              // Show map if it's currently collapsed
+              if (mapCollapsed) {
+                setMapCollapsed(false);
+              }
+            } else {
+              console.log('No opportunities extracted from response');
+              setOpportunities([]);
+            }
+            setMapLoading(false);
+          })
+          .catch((error) => {
+            console.error('Error extracting opportunities:', error);
+            setMapLoading(false);
+            setOpportunities([]);
+          });
+      } else {
+        setOpportunities([]);
+      }
+    } else {
+      setOpportunities([]);
+    }
+  }, [selectedChat, mapCollapsed]);
+
+  // Build URL for Google Maps with opportunity markers
   const getMapUrl = () => {
-    return `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15377478.99249724!2d${mapCenter.lng}!3d${mapCenter.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sid!4v1631512402051!5m2!1sen!2sid&zoom=${mapZoom}`;
+    // If we have opportunities, we'll use a different approach to show them
+    if (opportunities.length > 0) {
+      return `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15377478.99249724!2d${mapCenter.lng}!3d${mapCenter.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sid!4v1631512402051!5m2!1sen!2sid&zoom=${mapZoom}`;
+    } else {
+      return `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15377478.99249724!2d${mapCenter.lng}!3d${mapCenter.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sid!4v1631512402051!5m2!1sen!2sid&zoom=${mapZoom}`;
+    }
+  };
+
+  // Function to handle opportunity click
+  const handleOpportunityClick = (opportunity: TradeOpportunity) => {
+    setSelectedOpportunity(opportunity);
+    setMapCenter({ lat: opportunity.lat, lng: opportunity.lng });
+  };
+
+  // Function to close opportunity detail modal
+  const closeOpportunityDetail = () => {
+    setSelectedOpportunity(null);
+  };
+
+  // Render opportunity pins on map
+  const renderOpportunityPins = () => {
+    return opportunities.map((opp, index) => (
+      <div
+        key={`opp-${index}`}
+        className={`opportunity-pin ${selectedOpportunity === opp ? 'selected' : ''}`}
+        style={{
+          position: 'absolute',
+          // Simple calculation to position pins, in a real app you'd use proper map projection
+          left: `${((opp.lng + 180) / 360) * 100}%`,
+          top: `${((90 - opp.lat) / 180) * 100}%`,
+          transform: 'translate(-50%, -50%)',
+          cursor: 'pointer',
+          zIndex: selectedOpportunity === opp ? 10 : 1,
+        }}
+        onClick={() => handleOpportunityClick(opp)}
+        title={opp.opportunity}
+      >
+        <div
+          className="pin"
+          style={{
+            width: '16px',
+            height: '16px',
+            borderRadius: '50%',
+            backgroundColor: getRiskColor(opp.riskLevel || 'medium'),
+            border: '2px solid white',
+            boxShadow: '0 0 8px rgba(0,0,0,0.3)',
+            position: 'relative',
+          }}
+        >
+          {selectedOpportunity === opp && (
+            <div
+              className="pulse"
+              style={{
+                position: 'absolute',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: getRiskColor(opp.riskLevel || 'medium', 0.2),
+                top: '-14px',
+                left: '-14px',
+                animation: 'pulse 1.5s infinite',
+              }}
+            ></div>
+          )}
+        </div>
+      </div>
+    ));
+  };
+
+  // Helper function to get color based on risk level
+  const getRiskColor = (riskLevel: string, alpha = 1) => {
+    const colors = {
+      low: `rgba(76, 175, 80, ${alpha})`,
+      medium: `rgba(255, 152, 0, ${alpha})`,
+      high: `rgba(244, 67, 54, ${alpha})`,
+    };
+    return colors[riskLevel as keyof typeof colors] || colors.medium;
+  };
+
+  // Render the map section with pins and overlays
+  const renderMap = () => {
+    return (
+      <div
+        className={`map-container relative ${
+          mapCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'opacity-100'
+        }`}
+        style={{ height: '100%', width: '100%', position: 'relative' }}
+      >
+        {mapLoading && (
+          <div className="map-loading">
+            <div className="spinner"></div>
+            <span className="ml-3 text-gray-700">
+              Analyzing opportunities...
+            </span>
+          </div>
+        )}
+
+        {/* Base Google Maps iframe */}
+        <iframe
+          ref={mapRef}
+          src={getMapUrl()}
+          className="w-full h-full border-0"
+          loading="lazy"
+          title="Strategy Map"
+        ></iframe>
+
+        {/* Overlay with opportunity pins */}
+        <div
+          className="opportunity-overlay"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            pointerEvents: 'none', // Allow clicks to pass through to map
+          }}
+        >
+          <div
+            className="pins-container"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              pointerEvents: 'auto', // Enable clicks on pins
+            }}
+          >
+            {opportunities.length > 0 ? renderOpportunityPins() : null}
+          </div>
+        </div>
+
+        {/* Opportunity detail modal */}
+        {selectedOpportunity && (
+          <div className="opportunity-detail">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-lg font-semibold">
+                {selectedOpportunity.opportunity}
+              </h3>
+              <button
+                onClick={closeOpportunityDetail}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="opp-location mb-2 text-sm text-gray-600">
+              <strong>Location:</strong> {selectedOpportunity.country}
+              {selectedOpportunity.city ? `, ${selectedOpportunity.city}` : ''}
+            </div>
+
+            <div className="opp-sector mb-2 text-sm">
+              <span
+                className="inline-block px-2 py-1 rounded-full text-xs"
+                style={{
+                  backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                  color: 'rgb(25, 118, 210)',
+                }}
+              >
+                {selectedOpportunity.sector}
+              </span>
+            </div>
+
+            <div className="opp-details my-3 text-sm text-gray-700">
+              {selectedOpportunity.details}
+            </div>
+
+            <div className="opp-meta flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+              {selectedOpportunity.potentialValue && (
+                <div className="value text-xs">
+                  <span className="text-gray-500">Potential value:</span>
+                  <span className="ml-1 font-medium">
+                    {selectedOpportunity.potentialValue}
+                  </span>
+                </div>
+              )}
+
+              <div className="risk text-xs flex items-center">
+                <span className="text-gray-500 mr-1">Risk level:</span>
+                <span
+                  className="inline-block px-2 py-1 rounded-full text-white text-xs"
+                  style={{
+                    backgroundColor: getRiskColor(
+                      selectedOpportunity.riskLevel || 'medium'
+                    ),
+                  }}
+                >
+                  {selectedOpportunity.riskLevel || 'Medium'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Map controls */}
+        <div className="map-controls">
+          <button
+            onClick={zoomIn}
+            className="text-gray-700 hover:bg-gray-100"
+            title="Zoom in"
+          >
+            <FaSearchPlus size={16} />
+          </button>
+          <button
+            onClick={zoomOut}
+            className="text-gray-700 hover:bg-gray-100"
+            title="Zoom out"
+          >
+            <FaSearchMinus size={16} />
+          </button>
+          <button
+            onClick={resetZoom}
+            className="text-gray-700 hover:bg-gray-100"
+            title="Reset zoom"
+          >
+            <FaGlobe size={16} />
+          </button>
+          <button
+            onClick={openFullscreenMap}
+            className="text-gray-700 hover:bg-gray-100"
+            title="View larger map"
+          >
+            <FaExpand size={16} />
+          </button>
+        </div>
+
+        {/* Map legend */}
+        {opportunities.length > 0 && (
+          <div className="map-legend">
+            <div className="text-sm font-medium mb-2 flex items-center">
+              <FaInfoCircle className="mr-1 text-gray-500" size={14} />
+              <span>Opportunity Risk Levels</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center">
+                <span
+                  className="inline-block w-3 h-3 rounded-full mr-2"
+                  style={{ backgroundColor: getRiskColor('low') }}
+                ></span>
+                <span className="text-xs">Low Risk</span>
+              </div>
+              <div className="flex items-center">
+                <span
+                  className="inline-block w-3 h-3 rounded-full mr-2"
+                  style={{ backgroundColor: getRiskColor('medium') }}
+                ></span>
+                <span className="text-xs">Medium Risk</span>
+              </div>
+              <div className="flex items-center">
+                <span
+                  className="inline-block w-3 h-3 rounded-full mr-2"
+                  style={{ backgroundColor: getRiskColor('high') }}
+                ></span>
+                <span className="text-xs">High Risk</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const showNotification = (
@@ -410,61 +943,67 @@ const StrategiesPage: React.FC = () => {
     }
   }, [mapCollapsed]);
 
-  // Add custom styling for the chat bubbles with user icon on the right
-  // This is a new helper function to style messages correctly
-  const renderChatBubbles = (chat: ChatItem) => {
-    if (!chat.query || !chat.response) return null;
-
-    return (
-      <div className="space-y-4 p-4">
-        {/* User message with icon on right */}
-        <div className="flex justify-end items-start space-x-2">
-          <div className="bg-green-500 text-white p-3 rounded-lg rounded-tr-none max-w-[80%]">
-            <p>{chat.query}</p>
-          </div>
-          <div className="bg-green-600 text-white rounded-full p-2 flex-shrink-0">
-            <FaUser className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* AI response with icon on left */}
-        <div className="flex items-start space-x-2">
-          <div className="bg-green-100 text-green-800 rounded-full p-2 flex-shrink-0">
-            <FaRobot className="w-5 h-5" />
-          </div>
-          <div className="bg-white border border-gray-200 p-3 rounded-lg rounded-tl-none max-w-[80%] prose prose-sm">
-            {Array.isArray(chat.response) && chat.response[0]?.text && (
-              <div className="markdown-content">
-                {chat.response[0].text.split('\n\n').map((paragraph, i) => (
-                  <div key={i} className={i > 0 ? 'mt-3' : ''}>
-                    <div className="prose prose-green prose-headings:text-green-700 prose-a:text-green-600">
-                      <ReactMarkdown>
-                        {
-                          paragraph
-                            .replace(/\*\*/g, '**') // Ensure double asterisks are preserved for bold
-                            .replace(/\*/g, '*') // Ensure single asterisks are preserved for italic
-                        }
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Fix the ChatDetail component type issue by creating a proper adapter
   // Convert our ChatItem to ChatData for the ChatDetail component
   const adaptChatForDetail = (chat: ChatItem): ChatData => {
+    console.log('Adapting chat for detail:', chat);
+
+    // If the chat already has chatHistory, use that
+    if (chat.chatHistory && chat.chatHistory.length > 0) {
+      console.log(
+        `Chat ${chat._id} already has ${chat.chatHistory.length} history items`
+      );
+      return {
+        _id: chat._id,
+        query: chat.query,
+        response: (chat.response || []) as ChatResponse[],
+        chatHistory: chat.chatHistory.map((historyItem) => ({
+          ...historyItem,
+          response: (historyItem.response || []) as ChatResponse[],
+        })) as ChatData[],
+        context_used: chat.context_used || [],
+        sessionId: chat.sessionId || chat._id,
+      };
+    }
+
+    // Otherwise, look for it in the chats array
+    const fullChat = chats.find((c) => c._id === chat._id);
+
+    console.log('Full chat from chats array:', fullChat);
+    if (fullChat?.chatHistory) {
+      console.log('History found in chats array:', fullChat.chatHistory.length);
+    }
+
+    // Try to check if this is a new message in an existing session
+    let chatHistory: ChatItem[] = [];
+    if (fullChat?.chatHistory) {
+      // Use history from the full chat
+      chatHistory = fullChat.chatHistory;
+    } else if (fullChat?.sessionId) {
+      // If this chat has a sessionId, look for other chats with the same sessionId
+      const sessionChats = chats.filter(
+        (c) => c.sessionId === fullChat.sessionId && c._id !== chat._id
+      );
+
+      if (sessionChats.length > 0) {
+        console.log(
+          'Found other chats in the same session:',
+          sessionChats.length
+        );
+        chatHistory = sessionChats;
+      }
+    }
+
     return {
       _id: chat._id,
       query: chat.query,
-      response: chat.response || [],
-      // Add any other required properties from ChatData
-    } as ChatData;
+      response: (chat.response || []) as ChatResponse[],
+      chatHistory: chatHistory.map((historyItem) => ({
+        ...historyItem,
+        response: (historyItem.response || []) as ChatResponse[],
+      })) as ChatData[],
+      context_used: chat.context_used || [],
+      sessionId: fullChat?.sessionId || chat._id,
+    };
   };
 
   return (
@@ -626,15 +1165,21 @@ const StrategiesPage: React.FC = () => {
                   className="flex-1 overflow-y-auto bg-gray-50"
                 >
                   {selectedChat ? (
-                    selectedChat.response ? (
-                      renderChatBubbles(selectedChat)
-                    ) : (
+                    <div>
+                      <div className="p-2 bg-gray-100 text-xs text-gray-600 font-mono border-b border-gray-200">
+                        Debug: Chat ID: {selectedChat._id} |
+                        {selectedChat.sessionId
+                          ? ` Session ID: ${selectedChat.sessionId} | `
+                          : ''}
+                        History Items: {selectedChat.chatHistory?.length || 0}
+                      </div>
+                      {/* Always use ChatDetail for consistent history display */}
                       <ChatDetail
                         chat={adaptChatForDetail(selectedChat)}
                         loading={loading}
                         onSendMessage={handleSendMessage}
                       />
-                    )
+                    </div>
                   ) : (
                     renderWelcomeScreen()
                   )}
@@ -666,62 +1211,49 @@ const StrategiesPage: React.FC = () => {
               }`}
             >
               <div className="flex flex-col h-full w-full">
-                <div className="p-3 border-b border-gray-200 flex justify-between items-center bg-white">
-                  <div className="flex items-center">
-                    <div className="bg-green-100 p-1.5 rounded-full mr-2">
-                      <FaGlobe className="text-green-600" size={14} />
-                    </div>
-                    <h2 className="font-medium text-gray-800">Strategy Map</h2>
-                  </div>
-                  <div className="flex items-center space-x-1">
+                {/* Map header */}
+                <div className="flex justify-between items-center p-3 border-b border-gray-200 bg-white">
+                  <h2 className="font-medium text-gray-800">
+                    Trade Opportunities Map
+                  </h2>
+                  <div className="flex space-x-2">
                     <button
+                      className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
                       onClick={zoomIn}
                       title="Zoom in"
-                      className="p-1.5 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-all duration-200"
                     >
                       <FaSearchPlus size={14} />
                     </button>
                     <button
+                      className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
                       onClick={zoomOut}
                       title="Zoom out"
-                      className="p-1.5 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-all duration-200"
                     >
                       <FaSearchMinus size={14} />
                     </button>
                     <button
+                      className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
                       onClick={resetZoom}
                       title="Reset zoom"
-                      className="p-1.5 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-all duration-200"
                     >
-                      <span className="text-xs font-medium">1x</span>
+                      <FaGlobe size={14} />
                     </button>
                     <button
+                      className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
                       onClick={toggleMap}
                       title="Collapse map"
-                      className="p-1.5 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-all duration-200"
-                      aria-label="Collapse map"
                     >
-                      <FaChevronRight size={14} />
+                      <FaChevronRight
+                        size={14}
+                        className="text-gray-500"
+                        aria-label="Collapse map"
+                      />
                     </button>
                   </div>
                 </div>
-                <div className="flex-1 relative overflow-hidden">
-                  <iframe
-                    ref={mapRef}
-                    src={getMapUrl()}
-                    className="w-full h-full border-0"
-                    allowFullScreen={true}
-                    loading="lazy"
-                    title="Strategy Map"
-                  />
-                  <button
-                    onClick={openFullscreenMap}
-                    className="absolute top-2 left-2 bg-white border border-gray-300 px-2 py-1 text-sm rounded flex items-center gap-1 hover:bg-gray-100 transition-all duration-200"
-                    aria-label="View larger map"
-                  >
-                    <FaExpand size={12} /> View larger map
-                  </button>
-                </div>
+
+                {/* Map container */}
+                {renderMap()}
               </div>
             </div>
           </div>

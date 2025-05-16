@@ -406,16 +406,25 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [transportMode, setTransportMode] = useState<string>('sea');
 
-  // Extract destination from custom destination in simulationResults if available
-  const destination =
-    simulationResults?.destination ||
-    (selectedCountry
+  // Determine the destination for the MapInitializer component (marker and map focus).
+  // Priority is given to the currently selected country by the user, as this represents
+  // the destination being configured for a potential new trade simulation.
+  // If no country is actively selected, it falls back to the destination
+  // from any existing simulation results.
+  const destination = selectedCountry
+    ? {
+        name: selectedCountry.name,
+        lat: selectedCountry.lat,
+        lng: selectedCountry.lng,
+      }
+    : simulationResults?.destination
       ? {
-          name: selectedCountry.name,
-          lat: selectedCountry.lat,
-          lng: selectedCountry.lng,
+          // Ensure the object structure matches MapInitializerProps.destination
+          name: simulationResults.destination.name,
+          lat: simulationResults.destination.lat,
+          lng: simulationResults.destination.lng,
         }
-      : null);
+      : null;
 
   // Extract transport mode from simulation results if available
   useEffect(() => {

@@ -7,6 +7,7 @@ interface ChatMessageProps {
   message: string;
   contextUsed?: string[];
   loading?: boolean;
+  skeleton?: boolean;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -14,141 +15,206 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
   contextUsed,
   loading = false,
+  skeleton = false,
 }) => {
   const [showSources, setShowSources] = React.useState(false);
 
-  return (
-    <div
-      className={`message-container ${isUser ? 'user-message' : 'ai-message'}`}
-    >
-      {isUser ? (
-        <>
-          <div className="message-content user-content">
-            <div className="message-bubble user-bubble">{message}</div>
-          </div>
-          <div className="avatar-container">
-            <div className="avatar user-avatar">
-              <FaUser />
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="ai-avatar-container">
-            <div className="avatar ai-avatar">
-              <FaRobot />
-            </div>
-          </div>
-          <div className="message-content ai-content">
-            {loading ? (
-              <div className="message-bubble ai-bubble loading-bubble">
-                <div className="loading-dots">
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="message-bubble ai-bubble">
-                  {renderMarkdown(message)}
-                </div>
-                {contextUsed && contextUsed.length > 0 && (
-                  <div className="sources-section">
-                    <div
-                      className="sources-toggle"
-                      onClick={() => setShowSources(!showSources)}
-                    >
-                      <FaInfoCircle className="info-icon" />
-                      <span className="sources-text">
-                        View {contextUsed.length} sources used
-                      </span>
-                    </div>
+  // Common styles
+  const containerStyle: React.CSSProperties = {
+    position: 'relative',
+    width: '100%',
+    marginBottom: '28px',
+    display: 'flex',
+    alignItems: 'flex-start',
+  };
 
-                    {showSources && (
-                      <div className="sources-container">
-                        {contextUsed.map((context, index) => (
-                          <div key={index} className="source-item">
-                            <span className="source-text">{context}</span>
-                          </div>
-                        ))}
+  const avatarStyle: React.CSSProperties = {
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#52c41a',
+    color: 'white',
+    fontSize: '18px',
+    flexShrink: 0,
+  };
+
+  const bubbleStyle: React.CSSProperties = {
+    borderRadius: '20px',
+    padding: '14px 20px',
+    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
+    lineHeight: '1.6',
+    fontSize: '15px',
+    maxWidth: '80%',
+  };
+
+  // User message (with right-aligned avatar)
+  if (isUser) {
+    return (
+      <div
+        style={{
+          ...containerStyle,
+          flexDirection: 'row-reverse',
+        }}
+      >
+        <div
+          style={{
+            ...avatarStyle,
+            marginLeft: '12px',
+          }}
+        >
+          <FaUser />
+        </div>
+        <div
+          style={{
+            ...bubbleStyle,
+            backgroundColor: '#52c41a',
+            backgroundImage: 'linear-gradient(135deg, #52c41a, #73d13d)',
+            color: 'white',
+            borderTopRightRadius: '4px',
+          }}
+        >
+          {message}
+        </div>
+      </div>
+    );
+  }
+
+  // AI message (with left-aligned avatar)
+  return (
+    <div style={containerStyle}>
+      <div
+        style={{
+          ...avatarStyle,
+          marginRight: '12px',
+        }}
+      >
+        <FaRobot />
+      </div>
+      <div style={{ maxWidth: '80%' }}>
+        {loading ? (
+          <div
+            style={{
+              ...bubbleStyle,
+              backgroundColor: '#f5f5f5',
+              borderTopLeftRadius: '4px',
+              minWidth: '60px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <span className="dot"></span>
+              <span className="dot"></span>
+              <span className="dot"></span>
+            </div>
+          </div>
+        ) : skeleton ? (
+          <div
+            style={{
+              ...bubbleStyle,
+              backgroundColor: '#f5f5f5',
+              borderTopLeftRadius: '4px',
+              minHeight: '100px',
+            }}
+          >
+            <div className="skeleton-line" style={{ width: '85%' }}></div>
+            <div className="skeleton-line" style={{ width: '65%' }}></div>
+            <div className="skeleton-line" style={{ width: '90%' }}></div>
+            <div className="skeleton-line" style={{ width: '40%' }}></div>
+          </div>
+        ) : (
+          <>
+            <div
+              style={{
+                ...bubbleStyle,
+                backgroundColor: '#f5f5f5',
+                borderTopLeftRadius: '4px',
+                color: 'rgba(0, 0, 0, 0.85)',
+              }}
+            >
+              {renderMarkdown(message)}
+            </div>
+
+            {contextUsed && contextUsed.length > 0 && (
+              <div style={{ marginTop: '8px' }}>
+                <div
+                  onClick={() => setShowSources(!showSources)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#52c41a',
+                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s',
+                  }}
+                >
+                  <FaInfoCircle
+                    style={{ marginRight: '8px', fontSize: '14px' }}
+                  />
+                  <span
+                    style={{
+                      marginLeft: '8px',
+                      color: '#52c41a',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    View {contextUsed.length} sources used
+                  </span>
+                </div>
+
+                {showSources && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      padding: '10px',
+                      marginTop: '6px',
+                      backgroundColor: 'rgba(246, 255, 237, 0.5)',
+                      borderRadius: '8px',
+                    }}
+                  >
+                    {contextUsed.map((context, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          padding: '10px',
+                          backgroundColor: '#f9f9f9',
+                          borderRadius: '6px',
+                          border: '1px solid #f0f0f0',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            lineHeight: '1.5',
+                            color: 'rgba(0, 0, 0, 0.65)',
+                          }}
+                        >
+                          {context}
+                        </span>
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
-              </>
+              </div>
             )}
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
 
       <style>{`
-        .message-container {
-          display: flex;
-          margin-bottom: 28px;
-          width: 100%;
-        }
-        .user-message {
-          flex-direction: row-reverse;
-        }
-        .message-content {
-          max-width: 80%;
-        }
-        .avatar-container, .ai-avatar-container {
-          margin-top: 4px;
-        }
-        .avatar-container {
-          margin-left: 12px;
-        }
-        .ai-avatar-container {
-          margin-right: 12px;
-        }
-        .avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 18px;
-        }
-        .user-avatar {
-          background-color: #52c41a;
-        }
-        .ai-avatar {
-          background-color: #52c41a;
-        }
-        .message-bubble {
-          padding: 14px 20px;
-          border-radius: 20px;
-          overflow-wrap: break-word;
-          width: 100%;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-          line-height: 1.6;
-          font-size: 15px;
-        }
-        .user-bubble {
-          background-color: #52c41a;
-          background-image: linear-gradient(135deg, #52c41a, #73d13d);
-          border-top-right-radius: 4px;
-          color: white;
-        }
-        .ai-bubble {
-          background-color: #f5f5f5;
-          border-top-left-radius: 4px;
-          color: rgba(0, 0, 0, 0.85);
-        }
-        .loading-bubble {
-          min-width: 60px;
-          text-align: center;
-        }
-        .loading-dots {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 4px;
-        }
         .dot {
           width: 8px;
           height: 8px;
@@ -164,88 +230,30 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           animation-delay: 0.4s;
         }
         @keyframes dot-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.2); opacity: 1; }
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 0.6;
+          }
+          50% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
         }
-        .sources-section {
-          margin-top: 8px;
-        }
-        .sources-toggle {
-          display: flex;
-          align-items: center;
-          color: #52c41a;
-          cursor: pointer;
-          padding: 6px 10px;
-          border-radius: 4px;
-          transition: background-color 0.2s;
-        }
-        .sources-toggle:hover {
-          background-color: rgba(82, 196, 26, 0.1);
-        }
-        .info-icon {
-          margin-right: 8px;
-          font-size: 14px;
-        }
-        .sources-text {
-          margin-left: 8px;
-          color: #52c41a;
-          font-size: 14px;
-          font-weight: 500;
-        }
-        .sources-container {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          padding: 10px;
-          margin-top: 6px;
-          background-color: rgba(246, 255, 237, 0.5);
-          border-radius: 8px;
-        }
-        .source-item {
-          padding: 10px;
-          background-color: #f9f9f9;
-          border-radius: 6px;
-          border: 1px solid #f0f0f0;
-        }
-        .source-text {
-          font-size: 13px;
-          line-height: 1.5;
-          color: rgba(0, 0, 0, 0.65);
-        }
-        .message-bubble a {
-          color: #52c41a;
-          text-decoration: underline;
-        }
-        .message-bubble pre, .message-bubble code {
-          background-color: #f9f9f9;
-          border: 1px solid #f0f0f0;
+        .skeleton-line {
+          height: 16px;
+          margin-bottom: 10px;
+          background: linear-gradient(90deg, #eee 30%, #f9f9f9 50%, #eee 70%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
           border-radius: 4px;
         }
-        .message-bubble pre {
-          padding: 14px;
-          overflow-x: auto;
-          margin: 12px 0;
-        }
-        .message-bubble code {
-          padding: 2px 5px;
-        }
-        
-        @media (max-width: 768px) {
-          .message-container {
-            margin-bottom: 20px;
+        @keyframes skeleton-loading {
+          0% {
+            background-position: 200% 0;
           }
-          .message-content {
-            max-width: 85%;
-          }
-          .message-bubble {
-            padding: 12px 16px;
-            font-size: 14px;
-          }
-          .avatar-container {
-            margin-left: 8px;
-          }
-          .ai-avatar-container {
-            margin-right: 8px;
+          100% {
+            background-position: -200% 0;
           }
         }
       `}</style>

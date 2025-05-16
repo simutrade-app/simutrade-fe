@@ -8,7 +8,17 @@ interface ChatInputProps {
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, loading }) => {
   const [message, setMessage] = useState('');
+  const [pendingMessage, setPendingMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Handle loading state changes
+  useEffect(() => {
+    // When loading finishes, restore any pending message
+    if (!loading && pendingMessage) {
+      setMessage(pendingMessage);
+      setPendingMessage('');
+    }
+  }, [loading, pendingMessage]);
 
   // Auto-resize textarea based on content
   useEffect(() => {
@@ -21,7 +31,13 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, loading }) => {
 
   const handleSend = () => {
     if (message.trim()) {
+      // Store message before sending if we're going to be in loading state
+      setPendingMessage(message);
+
+      // Send message
       onSendMessage(message);
+
+      // Clear message state
       setMessage('');
 
       // Reset textarea height

@@ -1,16 +1,8 @@
 import React from 'react';
-import {
-  Card,
-  Typography,
-  Avatar,
-  Badge,
-  Progress,
-  Tooltip,
-  Statistic,
-} from 'antd';
-import { UserOutlined, RiseOutlined, TeamOutlined } from '@ant-design/icons';
+import { Card, Typography, Avatar, Progress, Space, Tag } from 'antd';
+import { TeamOutlined, ArrowUpOutlined } from '@ant-design/icons';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface CustomerData {
   count: number;
@@ -38,61 +30,61 @@ const TotalCustomers: React.FC<TotalCustomersProps> = ({
 }) => {
   const activeUsers = 1646; // From screenshot
   const activePercentage = 68; // From screenshot
+  const greenColor = '#52c41a';
 
   return (
     <Card
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <TeamOutlined style={{ color: '#1890ff' }} />
+        <Space>
+          <TeamOutlined style={{ color: greenColor }} />
           <span>Total Customers</span>
-        </div>
+        </Space>
       }
-      extra={<Text style={{ color: '#1890ff' }}>Show All →</Text>}
-      style={{ height: '100%', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+      extra={<Text style={{ color: greenColor }}>Show All →</Text>}
+      style={{
+        height: '100%',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+        borderRadius: '8px',
+      }}
+      bodyStyle={{ padding: '16px 24px' }}
     >
-      <div style={{ padding: '20px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <TeamOutlined
-            style={{
-              fontSize: '30px',
-              marginRight: '8px',
-              color: '#333',
-            }}
-          />
-          <span style={{ fontSize: '32px', fontWeight: 'bold', color: '#333' }}>
-            2,420
-          </span>
-          <div
-            style={{
-              marginLeft: 'auto',
-              backgroundColor: '#1890ff',
-              color: 'white',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: 'bold',
-            }}
-          >
-            NEW
-          </div>
-        </div>
-
-        <div style={{ margin: '8px 0 20px' }}>
-          <div
-            style={{ display: 'flex', alignItems: 'center', color: '#52c41a' }}
-          >
-            <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
-              +25% growth
-            </span>
-            <span
-              style={{ color: '#8c8c8c', marginLeft: '8px', fontSize: '14px' }}
+      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        {/* Customer Count Section */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Space align="center">
+            <TeamOutlined style={{ fontSize: '28px', color: '#333' }} />
+            <Text
+              style={{
+                fontSize: '32px',
+                fontWeight: 'bold',
+                color: '#333',
+                margin: 0,
+              }}
             >
-              this month
-            </span>
-          </div>
+              2,420
+            </Text>
+          </Space>
+          <Tag color={greenColor} style={{ margin: 0, fontWeight: 'bold' }}>
+            NEW
+          </Tag>
         </div>
 
-        <div style={{ margin: '20px 0' }}>
+        {/* Growth Section */}
+        <Space align="center">
+          <Text strong style={{ color: greenColor, fontSize: '16px' }}>
+            <ArrowUpOutlined /> +25% growth
+          </Text>
+          <Text type="secondary">this month</Text>
+        </Space>
+
+        {/* Active Users Section */}
+        <div>
           <div
             style={{
               display: 'flex',
@@ -101,21 +93,20 @@ const TotalCustomers: React.FC<TotalCustomersProps> = ({
             }}
           >
             <Text>Active users</Text>
-            <Text style={{ fontWeight: 'bold' }}>
+            <Text strong>
               {activeUsers} ({activePercentage}%)
             </Text>
           </div>
           <Progress
             percent={activePercentage}
             showInfo={false}
-            strokeColor={{
-              '0%': '#108ee9',
-              '100%': '#87d068',
-            }}
-            style={{ marginBottom: '30px' }}
+            strokeColor={greenColor}
+            trailColor="#f0f0f0"
+            style={{ marginBottom: '8px' }}
           />
         </div>
 
+        {/* Recent Customers Section */}
         <div>
           <Text
             type="secondary"
@@ -123,7 +114,7 @@ const TotalCustomers: React.FC<TotalCustomersProps> = ({
           >
             Recently active customers
           </Text>
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <Avatar.Group maxCount={5} maxStyle={{ backgroundColor: greenColor }}>
             {data.avatars.map((avatar, index) => (
               <Avatar
                 key={index}
@@ -132,32 +123,13 @@ const TotalCustomers: React.FC<TotalCustomersProps> = ({
                 style={{ border: '2px solid #fff' }}
               />
             ))}
-            <Avatar
-              style={{
-                backgroundColor: '#f56a00',
-                color: '#fff',
-                fontSize: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <Avatar style={{ backgroundColor: '#f56a00', fontSize: '16px' }}>
               A
             </Avatar>
-            <Avatar
-              style={{
-                backgroundColor: '#1890ff',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              +7
-            </Avatar>
-          </div>
+            <Avatar style={{ backgroundColor: greenColor }}>+7</Avatar>
+          </Avatar.Group>
         </div>
-      </div>
+      </Space>
     </Card>
   );
 };

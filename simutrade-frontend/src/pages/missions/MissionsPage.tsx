@@ -60,7 +60,7 @@ const sampleMissions: Mission[] = [
       'Learn the basics of international market research and complete a mini analysis.',
     category: 'Research',
     difficulty: 2,
-    deadline: '2023-12-15',
+    deadline: '2025-12-15',
     progress: 75,
     status: 'in_progress',
     steps: [
@@ -106,7 +106,7 @@ const sampleMissions: Mission[] = [
       "Optimize your product's international supply chain to reduce costs and time.",
     category: 'Logistics',
     difficulty: 4,
-    deadline: '2023-12-30',
+    deadline: '2025-12-30',
     progress: 25,
     status: 'in_progress',
     steps: [
@@ -158,7 +158,7 @@ const sampleMissions: Mission[] = [
       'Master the essential documentation needed for international trade.',
     category: 'Compliance',
     difficulty: 3,
-    deadline: '2023-12-10',
+    deadline: '2025-12-10',
     progress: 100,
     status: 'completed',
     steps: [
@@ -247,7 +247,7 @@ const sampleMissions: Mission[] = [
       'Develop cultural intelligence to effectively negotiate with global partners.',
     category: 'Negotiation',
     difficulty: 2,
-    deadline: '2023-11-30',
+    deadline: '2025-11-30',
     progress: 0,
     status: 'expired',
     steps: [

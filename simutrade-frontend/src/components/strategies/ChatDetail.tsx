@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import type { ChatData } from '../../services/AIService';
-import { FaCommentDots, FaArrowRight } from 'react-icons/fa';
+import { FaCommentDots, FaArrowRight, FaDownload } from 'react-icons/fa';
+import AIService from '../../services/AIService';
 
 interface ChatDetailProps {
   chat: ChatData | null;
@@ -21,6 +22,35 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chat]);
+
+  // For debugging purposes
+  useEffect(() => {
+    if (chat) {
+      console.log('ChatDetail received chat:', chat);
+      if (chat.chatHistory) {
+        console.log('Chat history entries:', chat.chatHistory.length);
+      }
+    }
+  }, [chat]);
+
+  // Handle PDF download
+  const handleDownloadPDF = async () => {
+    if (chat) {
+      // Use sessionId if available, otherwise fall back to _id
+      const chatIdToUse = chat.sessionId || chat._id;
+
+      if (chatIdToUse && !chatIdToUse.includes('placeholder')) {
+        console.log('Downloading PDF for chat ID:', chatIdToUse);
+        try {
+          await AIService.createChatPDF(chatIdToUse);
+        } catch (error) {
+          console.error('Error downloading PDF:', error);
+        }
+      } else {
+        console.warn('No valid chat ID found for PDF download');
+      }
+    }
+  };
 
   // Always show empty state (New Question) by default
   if (!chat && !loading) {
@@ -89,6 +119,18 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           <FaCommentDots className="chat-title-icon" />
           <h2 className="chat-title">Chat with the AI Tutor</h2>
         </div>
+        {chat &&
+          ((chat._id && !chat._id.includes('placeholder')) ||
+            (chat.sessionId && !chat.sessionId.includes('placeholder'))) && (
+            <button
+              className="download-pdf-button"
+              onClick={handleDownloadPDF}
+              title="Download as PDF"
+            >
+              <FaDownload className="download-icon" />
+              <span className="download-text">PDF</span>
+            </button>
+          )}
       </div>
       <div className="chat-messages-container">
         {loading && !chat ? (
@@ -100,19 +142,45 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           <>
             {chat && (
               <div className="chat-messages">
+                {/* First render all history items in chronological order */}
+                {chat.chatHistory && chat.chatHistory.length > 0 && (
+                  <>
+                    {chat.chatHistory.map((historyItem, historyIndex) => (
+                      <React.Fragment key={`history-${historyIndex}`}>
+                        <ChatMessage
+                          isUser={true}
+                          message={historyItem.query}
+                        />
+                        {historyItem.response &&
+                          historyItem.response.map(
+                            (response, responseIndex) => (
+                              <ChatMessage
+                                key={`history-${historyIndex}-response-${responseIndex}`}
+                                isUser={false}
+                                message={response.text || ''}
+                                contextUsed={historyItem.context_used}
+                              />
+                            )
+                          )}
+                      </React.Fragment>
+                    ))}
+                  </>
+                )}
+
+                {/* Then display the main current query and response */}
                 <ChatMessage isUser={true} message={chat.query} />
+                {chat.response &&
+                  chat.response.map((response, index) => (
+                    <ChatMessage
+                      key={`main-${index}`}
+                      isUser={false}
+                      message={response.text || ''}
+                      contextUsed={chat.context_used}
+                    />
+                  ))}
 
-                {chat.response.map((response, index) => (
-                  <ChatMessage
-                    key={index}
-                    isUser={false}
-                    message={response.text}
-                    contextUsed={chat.context_used}
-                  />
-                ))}
-
-                {loading && (
-                  <ChatMessage isUser={false} message="" loading={true} />
+                {loading && !chat.response?.[0]?.text && (
+                  <ChatMessage isUser={false} message="" skeleton={true} />
                 )}
                 <div ref={messagesEndRef} />
               </div>
@@ -143,6 +211,9 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           background-color: #ffffff;
           z-index: 5;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
         .chat-title-container {
           display: flex;
@@ -158,6 +229,27 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           font-size: 18px;
           font-weight: 500;
           color: rgba(0, 0, 0, 0.85);
+        }
+        .download-pdf-button {
+          background-color: #f6ffed;
+          border: 1px solid #b7eb8f;
+          border-radius: 6px;
+          color: #52c41a;
+          display: flex;
+          align-items: center;
+          padding: 6px 12px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+        .download-pdf-button:hover {
+          background-color: #d9f7be;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .download-icon {
+          margin-right: 6px;
+          font-size: 14px;
         }
         .chat-messages-container {
           flex: 1;
@@ -313,6 +405,15 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           }
           .chat-title-icon {
             font-size: 18px;
+          }
+          .download-text {
+            display: none;
+          }
+          .download-pdf-button {
+            padding: 6px 8px;
+          }
+          .download-icon {
+            margin-right: 0;
           }
           .chat-messages-container {
             padding: 16px;

@@ -7,9 +7,7 @@ import {
   Space,
   Typography,
   Tag,
-  Tooltip,
   Divider,
-  Empty,
   Input,
   InputNumber,
   Form,
@@ -22,10 +20,8 @@ import {
 import {
   ArrowRightOutlined,
   ArrowLeftOutlined,
-  InfoCircleOutlined,
   RocketOutlined,
   EnvironmentOutlined,
-  GlobalOutlined,
   ReloadOutlined,
   DollarOutlined,
   CalculatorOutlined,
@@ -35,6 +31,10 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import '../../styles/dashboard.css';
+
+// Import the CountryDropdown component
+import CountryDropdown from './CountryDropdown';
+import type { Country } from './CountrySelectorButton';
 
 // Custom icons for transport mode
 const ShipOutlined = () => <span style={{ fontSize: '16px' }}>🚢</span>;
@@ -64,6 +64,71 @@ const originCountries = [
   { id: 'THA', name: 'Thailand', flag: '🇹🇭' },
   { id: 'VNM', name: 'Vietnam', flag: '🇻🇳' },
   { id: 'PHL', name: 'Philippines', flag: '🇵🇭' },
+];
+
+// Sample destination countries for dropdown
+// Expanded country list with flag URLs for CountryDropdown
+const destinationCountries: Country[] = [
+  {
+    id: 'us',
+    name: 'United States',
+    code: 'US',
+    flagUrl: 'https://flagcdn.com/w80/us.png',
+  },
+  {
+    id: 'cn',
+    name: 'China',
+    code: 'CN',
+    flagUrl: 'https://flagcdn.com/w80/cn.png',
+  },
+  {
+    id: 'jp',
+    name: 'Japan',
+    code: 'JP',
+    flagUrl: 'https://flagcdn.com/w80/jp.png',
+  },
+  {
+    id: 'kr',
+    name: 'South Korea',
+    code: 'KR',
+    flagUrl: 'https://flagcdn.com/w80/kr.png',
+  },
+  {
+    id: 'de',
+    name: 'Germany',
+    code: 'DE',
+    flagUrl: 'https://flagcdn.com/w80/de.png',
+  },
+  {
+    id: 'gb',
+    name: 'United Kingdom',
+    code: 'GB',
+    flagUrl: 'https://flagcdn.com/w80/gb.png',
+  },
+  {
+    id: 'fr',
+    name: 'France',
+    code: 'FR',
+    flagUrl: 'https://flagcdn.com/w80/fr.png',
+  },
+  {
+    id: 'ca',
+    name: 'Canada',
+    code: 'CA',
+    flagUrl: 'https://flagcdn.com/w80/ca.png',
+  },
+  {
+    id: 'au',
+    name: 'Australia',
+    code: 'AU',
+    flagUrl: 'https://flagcdn.com/w80/au.png',
+  },
+  {
+    id: 'sg',
+    name: 'Singapore',
+    code: 'SG',
+    flagUrl: 'https://flagcdn.com/w80/sg.png',
+  },
 ];
 
 // Transport mode information for display
@@ -106,12 +171,22 @@ const transportModeInfo: TransportModes = {
   },
 };
 
+// Create interfaces for country data
+interface CountryData {
+  name: string;
+  lat?: number;
+  lng?: number;
+  iso?: string;
+  code?: string;
+  id?: string;
+}
+
 interface SimulationPanelProps {
-  selectedCountry: any | null;
-  onRunSimulation: (formData: any) => void;
+  selectedCountry: CountryData | null;
+  onRunSimulation: (formData: Record<string, any>) => void;
   onResetSimulation: () => void;
   isSimulating: boolean;
-  simulationResults: any | null;
+  simulationResults: Record<string, any> | null;
 }
 
 interface FormDataType {
@@ -124,6 +199,8 @@ interface FormDataType {
   destinationName: string;
   destinationLat: number | null;
   destinationLng: number | null;
+  useDropdownSelection: boolean;
+  dropdownDestinationId: string | null;
   customFields: {
     price: number;
     weight: number;
@@ -140,6 +217,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   const [form] = Form.useForm();
   const [activeTab, setActiveTab] = useState('1');
   const [customDestination, setCustomDestination] = useState(false);
+  const [useDropdownSelection, setUseDropdownSelection] = useState(false); // New state for dropdown selection
   const [formData, setFormData] = useState<FormDataType>({
     commodity: null,
     volume: 50, // default value
@@ -150,6 +228,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
     destinationName: '',
     destinationLat: null,
     destinationLng: null,
+    useDropdownSelection: false, // Default to false (use map selection)
+    dropdownDestinationId: null, // No dropdown selection by default
     customFields: {
       price: 1000,
       weight: 500,
@@ -188,7 +268,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   }, [formData, selectedCountry]);
 
   // Helper function to calculate base shipping time based on distance
-  const calculateBaseTime = (country: any) => {
+  const calculateBaseTime = (country: CountryData) => {
     // This would be based on real distance data in production
     // For now, just some mock logic based on region
     const region = country.name || '';
@@ -222,14 +302,21 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   const isBasicInfoTabComplete = () => {
     const commoditySelected = !!formData.commodity;
     let destinationSelected = false;
-    if (formData.customDestination) {
+
+    if (useDropdownSelection) {
+      // If using dropdown, check if a destination is selected in the dropdown
+      destinationSelected = !!formData.dropdownDestinationId;
+    } else if (formData.customDestination) {
+      // If using custom coordinates
       destinationSelected =
         !!formData.destinationName &&
         formData.destinationLat !== null &&
         formData.destinationLng !== null;
     } else {
+      // If using map selection
       destinationSelected = !!selectedCountry;
     }
+
     return commoditySelected && destinationSelected;
   };
 
@@ -253,7 +340,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       '2': isTransportOptionsTabComplete(),
       // '3' will be updated when other tabs are complete or based on its own fields
     }));
-  }, [formData, selectedCountry, customDestination]);
+  }, [formData, selectedCountry, customDestination, useDropdownSelection]);
 
   // Update Tab 3 completion when Tab 1 or Tab 2 completion changes
   useEffect(() => {
@@ -278,29 +365,36 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         destinationName: '',
         destinationLat: null,
         destinationLng: null,
+        useDropdownSelection: false,
+        dropdownDestinationId: null,
         customFields: {
           price: 1000,
           weight: 500,
         },
       });
       setCustomDestination(false); // Reset custom destination flag
+      setUseDropdownSelection(false); // Reset dropdown selection flag
       setActiveTab('1'); // Go back to the first tab
       setTabCompletionStatus({ '1': false, '2': true, '3': false });
-    } else if (selectedCountry && !formData.customDestination) {
-      // If a country is selected on the map, and not using custom destination,
+    } else if (
+      selectedCountry &&
+      !formData.customDestination &&
+      !useDropdownSelection
+    ) {
+      // If a country is selected on the map, and not using custom destination or dropdown,
       // update form data with selected country's details
       form.setFieldsValue({
         destinationName: selectedCountry.name,
         // Assuming selectedCountry has lat/lng. Adjust if structure is different.
-        destinationLat: selectedCountry.lat,
-        destinationLng: selectedCountry.lng,
+        destinationLat: selectedCountry.lat || null,
+        destinationLng: selectedCountry.lng || null,
       });
       setFormData((prevData) => ({
         ...prevData,
         destinationName: selectedCountry.name,
-        destinationLat: selectedCountry.lat,
-        destinationLng: selectedCountry.lng,
-        destinationCountry: selectedCountry.iso, // Assuming iso is the country code
+        destinationLat: selectedCountry.lat || null,
+        destinationLng: selectedCountry.lng || null,
+        destinationCountry: selectedCountry.iso || null,
       }));
     }
   }, [selectedCountry, form, simulationResults]);
@@ -325,27 +419,61 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
     form.setFieldsValue({ originCountry: countryCode });
   };
 
-  const handleCustomFieldChange = (field: string, value: any) => {
+  const handleCustomFieldChange = (field: string, value: number | null) => {
     setFormData({
       ...formData,
       customFields: {
         ...formData.customFields,
-        [field]: value,
+        [field]: value !== null ? value : 0, // Default to 0 if null
       },
     });
   };
 
-  // Toggle custom destination
-  const handleCustomDestinationToggle = (checked: boolean) => {
-    setCustomDestination(checked);
-    setFormData({
-      ...formData,
-      customDestination: checked,
-    });
+  // Handle dropdown destination selection
+  const handleDestinationDropdownChange = (countryId: string) => {
+    // Find the selected country data
+    const selectedDestination = destinationCountries.find(
+      (c) => c.id === countryId
+    );
+
+    if (selectedDestination) {
+      // Map of country coordinates based on country ID
+      const countryCoordinates: {
+        [key: string]: { lat: number; lng: number };
+      } = {
+        us: { lat: 38.8951, lng: -77.0364 }, // Washington DC, USA
+        cn: { lat: 39.9042, lng: 116.4074 }, // Beijing, China
+        jp: { lat: 35.6762, lng: 139.6503 }, // Tokyo, Japan
+        kr: { lat: 37.5665, lng: 126.978 }, // Seoul, South Korea
+        de: { lat: 52.52, lng: 13.405 }, // Berlin, Germany
+        gb: { lat: 51.5074, lng: -0.1278 }, // London, UK
+        fr: { lat: 48.8566, lng: 2.3522 }, // Paris, France
+        ca: { lat: 45.4215, lng: -75.6972 }, // Ottawa, Canada
+        au: { lat: -35.2809, lng: 149.13 }, // Canberra, Australia
+        sg: { lat: 1.3521, lng: 103.8198 }, // Singapore
+      };
+
+      // Get coordinates for the selected country
+      const coordinates = countryCoordinates[countryId] || { lat: 0, lng: 0 };
+
+      setFormData({
+        ...formData,
+        dropdownDestinationId: countryId,
+        // Store destination info for simulation
+        destinationName: selectedDestination.name,
+        destinationCountry: selectedDestination.code,
+        // Use the coordinates from our map
+        destinationLat: coordinates.lat,
+        destinationLng: coordinates.lng,
+      });
+    }
   };
 
   // Update custom destination fields
-  const handleCustomDestinationChange = (field: string, value: any) => {
+  const handleCustomDestinationChange = (
+    field: string,
+    value: string | number | null
+  ) => {
     setFormData({
       ...formData,
       [field]: value,
@@ -363,20 +491,29 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           estimatedCost: estimates.cost,
           estimatedTime: estimates.time,
           // Ensure destination details are correctly passed
-          destination: customDestination
+          destination: useDropdownSelection
             ? {
                 name: formData.destinationName,
+                code: formData.destinationCountry,
+                id: formData.dropdownDestinationId,
+                // Use the actual lat/lng values stored in formData
                 lat: formData.destinationLat,
                 lng: formData.destinationLng,
               }
-            : selectedCountry
+            : customDestination
               ? {
-                  name: selectedCountry.name,
-                  lat: selectedCountry.lat,
-                  lng: selectedCountry.lng,
-                  iso: selectedCountry.iso,
+                  name: formData.destinationName,
+                  lat: formData.destinationLat,
+                  lng: formData.destinationLng,
                 }
-              : null,
+              : selectedCountry
+                ? {
+                    name: selectedCountry.name,
+                    lat: selectedCountry.lat,
+                    lng: selectedCountry.lng,
+                    iso: selectedCountry.iso,
+                  }
+                : null,
         };
         onRunSimulation(simulationData);
       })
@@ -411,10 +548,6 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
     destinationLng: '1',
     transportMode: '2',
     // Add other form items from Tab 3 if they have validation
-  };
-
-  const getSelectedOriginCountry = () => {
-    return originCountries.find((c) => c.id === formData.originCountry);
   };
 
   const handleTabChange = (key: string) => {
@@ -490,9 +623,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
                   value={formData.commodity}
                   showSearch
                   filterOption={(input, option) =>
-                    option?.children
-                      ?.toString()
-                      .toLowerCase()
+                    (option?.children as unknown as string)
+                      ?.toLowerCase()
                       .includes(input.toLowerCase())
                   }
                 >
@@ -515,9 +647,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
                   onChange={handleOriginCountryChange}
                   showSearch
                   filterOption={(input, option) =>
-                    option?.children
-                      ?.toString()
-                      .toLowerCase()
+                    (option?.children as unknown as string)
+                      ?.toLowerCase()
                       .includes(input.toLowerCase())
                   }
                 >
@@ -547,15 +678,60 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           </Title>
           <Form.Item>
             <Radio.Group
-              onChange={(e) => handleCustomDestinationToggle(e.target.value)}
-              value={customDestination}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'map') {
+                  setCustomDestination(false);
+                  setUseDropdownSelection(false);
+                } else if (value === 'custom') {
+                  setCustomDestination(true);
+                  setUseDropdownSelection(false);
+                } else if (value === 'dropdown') {
+                  setCustomDestination(false);
+                  setUseDropdownSelection(true);
+                }
+
+                setFormData({
+                  ...formData,
+                  customDestination: value === 'custom',
+                  useDropdownSelection: value === 'dropdown',
+                });
+              }}
+              value={
+                useDropdownSelection
+                  ? 'dropdown'
+                  : customDestination
+                    ? 'custom'
+                    : 'map'
+              }
             >
-              <Radio value={false}>Select destination country on map</Radio>
-              <Radio value={true}>Enter custom coordinates</Radio>
+              <Radio value="map">Select destination country on map</Radio>
+              <Radio value="custom">Enter custom coordinates</Radio>
+              <Radio value="dropdown">Choose from country list</Radio>
             </Radio.Group>
           </Form.Item>
 
-          {customDestination ? (
+          {useDropdownSelection ? (
+            // Dropdown selection UI
+            <Form.Item
+              name="dropdownDestinationId"
+              label="Select Destination Country"
+              rules={[
+                {
+                  required: useDropdownSelection,
+                  message: 'Please select a destination country',
+                },
+              ]}
+            >
+              <CountryDropdown
+                type="destination"
+                value={formData.dropdownDestinationId || undefined}
+                onChange={handleDestinationDropdownChange}
+                placeholder="Select destination country"
+              />
+            </Form.Item>
+          ) : customDestination ? (
+            // Custom coordinates UI
             <>
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
@@ -564,7 +740,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
                     label="Destination Name / Port"
                     rules={[
                       {
-                        required: true,
+                        required: customDestination,
                         message: 'Please enter destination name',
                       },
                     ]}
@@ -588,7 +764,10 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
                     name="destinationLat"
                     label="Latitude"
                     rules={[
-                      { required: true, message: 'Please enter latitude' },
+                      {
+                        required: customDestination,
+                        message: 'Please enter latitude',
+                      },
                     ]}
                   >
                     <InputNumber
@@ -606,7 +785,10 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
                     name="destinationLng"
                     label="Longitude"
                     rules={[
-                      { required: true, message: 'Please enter longitude' },
+                      {
+                        required: customDestination,
+                        message: 'Please enter longitude',
+                      },
                     ]}
                   >
                     <InputNumber
@@ -622,6 +804,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
               </Row>
             </>
           ) : (
+            // Map selection UI
             <Paragraph>
               {selectedCountry ? (
                 <Tag color="blue" icon={<EnvironmentOutlined />}>
@@ -855,16 +1038,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           Back
         </Button>
 
-        {activeTab !== '3' ? (
-          <Button
-            type="primary"
-            icon={<ArrowRightOutlined />}
-            onClick={handleNextTab}
-            disabled={!tabCompletionStatus[activeTab]}
-          >
-            Next
-          </Button>
-        ) : (
+        {activeTab === '3' ? (
           <Space>
             <Button
               type="primary"
@@ -885,6 +1059,15 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
               Reset Simulation
             </Button>
           </Space>
+        ) : (
+          <Button
+            type="primary"
+            icon={<ArrowRightOutlined />}
+            onClick={handleNextTab}
+            disabled={!tabCompletionStatus[activeTab]}
+          >
+            Next
+          </Button>
         )}
       </Space>
 

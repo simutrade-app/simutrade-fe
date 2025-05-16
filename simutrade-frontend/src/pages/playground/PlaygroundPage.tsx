@@ -1,11 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Typography, Spin, Layout } from 'antd';
 import InteractiveTradeMap from '../../components/playground/InteractiveTradeMap';
 import SimulationPanel from '../../components/playground/SimulationPanel';
 import ResultsDisplay from '../../components/playground/ResultsDisplay';
+import AIThinkingProcess from '../../components/playground/AIThinkingProcess';
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
+
+// Function to get token from localStorage or other sources
+const getAuthToken = () => {
+  try {
+    // Check localStorage first
+    const storedToken = localStorage.getItem('auth_token');
+    if (storedToken && storedToken.trim() !== '') {
+      return storedToken;
+    }
+    // Fallback token for demo purposes
+    return 'simutrade-demo-token-123';
+  } catch (error) {
+    console.error('Error fetching token:', error);
+    return 'simutrade-demo-token-123'; // Fallback token for demo
+  }
+};
 
 // Function to get coordinates for a country by ID
 const getCountryCoordinates = (countryId: string) => {
@@ -36,6 +53,22 @@ const PlaygroundPage: React.FC = () => {
   const [simulating, setSimulating] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [results, setResults] = useState<any>(null);
+  const [simulationData, setSimulationData] = useState<Record<string, any>>({});
+  const [authToken, setAuthToken] = useState<string>(
+    'simutrade-demo-token-123'
+  ); // Initialize with default demo token
+
+  // Load auth token on component mount
+  useEffect(() => {
+    const token = getAuthToken();
+    setAuthToken(token);
+
+    // Store the token in localStorage for demo
+    if (token && token !== localStorage.getItem('auth_token')) {
+      localStorage.setItem('auth_token', token);
+      console.log('Auth token saved to localStorage');
+    }
+  }, []);
 
   const handleCountrySelect = (countryData: any) => {
     setSelectedCountry(countryData);
@@ -49,10 +82,12 @@ const PlaygroundPage: React.FC = () => {
     }
 
     setSimulating(true);
+    // Store the form data for AI analysis
+    setSimulationData(formData);
 
     try {
-      // Simulasi API call ke backend
-      // Dalam implementasi sebenarnya, ini akan memanggil API ke backend
+      // Simulate API call to backend
+      // In a real implementation, this would call an API to the backend
       // POST /api/simulation/run
       const response = await new Promise((resolve) => {
         setTimeout(() => {
@@ -142,6 +177,7 @@ const PlaygroundPage: React.FC = () => {
   const resetSimulation = () => {
     setResults(null);
     setSelectedCountry(null);
+    setSimulationData({}); // Clear simulation data when reset
   };
 
   return (
@@ -212,6 +248,20 @@ const PlaygroundPage: React.FC = () => {
           </Col>
         </Row>
 
+        {/* AI Thinking Process - Shows after simulation runs */}
+        {results && (
+          <Row gutter={[0, 24]}>
+            <Col span={24}>
+              <AIThinkingProcess
+                simulationData={simulationData}
+                isSimulating={simulating}
+                authToken={authToken}
+              />
+            </Col>
+          </Row>
+        )}
+
+        {/* Results Display - Shows after simulation */}
         {results && (
           <Row gutter={[0, 24]}>
             <Col span={24}>

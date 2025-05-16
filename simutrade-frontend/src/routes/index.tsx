@@ -19,10 +19,8 @@ const OAuthCallbackPage = lazy(() => import('@/pages/auth/OAuthCallbackPage'));
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const PlaygroundPage = lazy(() => import('@/pages/playground/PlaygroundPage'));
 const StrategiesPage = lazy(() => import('@/pages/strategies/StrategiesPage'));
-// Import from the directory instead of the specific file
-const MissionsPage = lazy(() => import('@/pages/missions'));
-// Import for mentor page
-const MentorPage = lazy(() => import('@/pages/mentor'));
+const TradeMissionsPage = lazy(() => import('@/pages/missions'));
+// const MentorPage = lazy(() => import('@/pages/mentor')); // Mentor page import commented out
 
 // Fallback loading component
 const LoadingFallback = () => {
@@ -142,20 +140,20 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<MissionsPage />} />
+          <Route index element={<TradeMissionsPage />} />
         </Route>
 
-        {/* Mentor Route */}
-        <Route
+        {/* Mentor Route - Commented out */}
+        {/* <Route
           path="/mentor"
-          element={
+          element={(
             <ProtectedRoute>
               <DashboardLayout />
             </ProtectedRoute>
-          }
+          )}
         >
-          <Route index element={<MentorPage />} />
-        </Route>
+          <Route index element={<MentorPage />} /> 
+        </Route> */}
 
         {/* 404 Not Found Route */}
         <Route path="*" element={<NotFoundPage />} />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -7,13 +7,9 @@ import {
   ZoomInOutlined,
   ZoomOutOutlined,
   AimOutlined,
-  InfoCircleOutlined,
 } from '@ant-design/icons';
 
 // Custom icons for transport mode
-const ShipOutlined = () => <span style={{ fontSize: '16px' }}>🚢</span>;
-const RiseOutlined = () => <span style={{ fontSize: '16px' }}>✈️</span>;
-const CarOutlined = () => <span style={{ fontSize: '16px' }}>🚚</span>;
 
 // Extend the Default interface to include _getIconUrl
 declare module 'leaflet' {
@@ -21,6 +17,11 @@ declare module 'leaflet' {
     interface Default {
       _getIconUrl?: string;
     }
+  }
+  // It's better to extend LatLngLiteral or LatLng to ensure lat/lng properties
+  interface LatLngLiteral {
+    lat: number;
+    lng: number;
   }
 }
 
@@ -66,7 +67,10 @@ const CustomZoomControl = () => {
 
           // Remove existing marker if any
           map.eachLayer((layer: L.Layer) => {
-            if ((layer as any)._currentLocation) {
+            if (
+              (layer as L.Marker & { _currentLocation?: boolean })
+                ._currentLocation
+            ) {
               map.removeLayer(layer);
             }
           });
@@ -74,7 +78,9 @@ const CustomZoomControl = () => {
           const marker = L.marker([latitude, longitude], {
             icon: currentLocationIcon,
           });
-          (marker as any)._currentLocation = true;
+          (
+            marker as L.Marker & { _currentLocation?: boolean }
+          )._currentLocation = true;
           marker.addTo(map).bindPopup('Your current location').openPopup();
         },
         (error) => {
@@ -195,7 +201,10 @@ const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
 
       // Remove existing destination marker if any
       map.eachLayer((layer: L.Layer) => {
-        if ((layer as any)._destinationMarker) {
+        if (
+          (layer as L.Marker & { _destinationMarker?: boolean })
+            ._destinationMarker
+        ) {
           map.removeLayer(layer);
         }
       });
@@ -203,7 +212,9 @@ const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
       const marker = L.marker([destination.lat, destination.lng], {
         icon: destinationIcon,
       });
-      (marker as any)._destinationMarker = true;
+      (
+        marker as L.Marker & { _destinationMarker?: boolean }
+      )._destinationMarker = true;
       marker
         .addTo(map)
         .bindPopup(`Destination: ${destination.name || 'Selected Location'}`)
@@ -225,7 +236,7 @@ const RouteAnimation = ({
   routePoints,
   transportMode,
 }: {
-  routePoints: any[];
+  routePoints: L.LatLngLiteral[];
   transportMode: string;
 }) => {
   const map = useMap();
@@ -373,9 +384,23 @@ const RouteAnimation = ({
 };
 
 interface InteractiveTradeMapProps {
-  onCountrySelect: (countryData: any) => void;
-  selectedCountry: any;
-  simulationResults: any;
+  onCountrySelect: (countryData: {
+    name: string;
+    iso: string;
+    lat: number;
+    lng: number;
+  }) => void;
+  selectedCountry: {
+    name: string;
+    iso: string;
+    lat: number;
+    lng: number;
+  } | null;
+  simulationResults: {
+    destination?: { lat: number; lng: number; name?: string };
+    transportMode?: string;
+    optimalRoute?: L.LatLngLiteral[];
+  } | null;
 }
 
 const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
@@ -383,7 +408,8 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   selectedCountry,
   simulationResults,
 }) => {
-  const [countriesGeoJSON, setCountriesGeoJSON] = useState<any>(null);
+  const [countriesGeoJSON, setCountriesGeoJSON] =
+    useState<GeoJSON.FeatureCollection | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [transportMode, setTransportMode] = useState<string>('sea');
 
@@ -422,13 +448,15 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   }, []);
 
   // Define style for each country based on import needs (simulated data)
-  const getCountryStyle = (feature: any) => {
+  const getCountryStyle = (
+    feature?: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>
+  ): L.PathOptions => {
     // This would be based on real data from API in production
     // GET /api/countries/import-needs
     const importNeeds = Math.random() * 5; // Simulated data on a 0-5 scale
 
     const isSelected =
-      selectedCountry && feature.properties.ISO_A3 === selectedCountry.iso;
+      selectedCountry && feature?.properties?.ISO_A3 === selectedCountry.iso;
 
     return {
       fillColor:
@@ -449,9 +477,9 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
     };
   };
 
-  const onEachFeature = (feature: any, layer: any) => {
-    const countryName = feature.properties.ADMIN;
-    const countryCode = feature.properties.ISO_A3;
+  const onEachFeature = (feature: GeoJSON.Feature, layer: L.Layer) => {
+    const countryName = feature.properties?.ADMIN;
+    const countryCode = feature.properties?.ISO_A3;
 
     // Skip for Indonesia (origin country)
     if (countryCode === 'IDN') {
@@ -459,7 +487,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
     }
 
     // Add tooltips
-    layer.bindTooltip(countryName, {
+    layer.bindTooltip(countryName || 'Unknown Country', {
       permanent: false,
       direction: 'center',
       className: 'country-tooltip',
@@ -469,18 +497,18 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
     layer.on({
       click: () => {
         // Get country centroid for placing markers
-        const bounds = layer.getBounds();
+        const bounds = (layer as L.FeatureGroup).getBounds();
         const center = bounds.getCenter();
 
         onCountrySelect({
-          name: countryName,
-          iso: countryCode,
+          name: countryName || 'Unknown Country',
+          iso: countryCode || 'N/A',
           lat: center.lat,
           lng: center.lng,
         });
       },
-      mouseover: (e: any) => {
-        const layer = e.target;
+      mouseover: (e: L.LeafletMouseEvent) => {
+        const layer = e.target as L.Path;
         layer.setStyle({
           weight: 3,
           color: '#666',
@@ -489,8 +517,8 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
         });
         layer.bringToFront();
       },
-      mouseout: (e: any) => {
-        const layer = e.target;
+      mouseout: (e: L.LeafletMouseEvent) => {
+        const layer = e.target as L.Path;
         layer.setStyle(getCountryStyle(feature));
       },
     });
@@ -540,7 +568,9 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
         {countriesGeoJSON && (
           <GeoJSON
             data={countriesGeoJSON}
-            style={getCountryStyle}
+            style={
+              getCountryStyle as L.StyleFunction<GeoJSON.GeoJsonProperties>
+            }
             onEachFeature={onEachFeature}
           />
         )}

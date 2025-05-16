@@ -68,10 +68,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
           label: <Link to="/missions">Trade Missions</Link>,
         },
         {
-          key: '/mentor',
-          label: <Link to="/mentor">AI Trade Mentor</Link>,
-        },
-        {
           key: '/arena',
           label: <Link to="/arena">Global Trade Arena</Link>,
         },

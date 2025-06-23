@@ -496,6 +496,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
     }
 
     const countryName =
+      feature.properties?.name || // Correct property name from GeoJSON
       feature.properties?.ADMIN ||
       feature.properties?.NAME ||
       feature.properties?.SOVEREIGNT ||
@@ -504,8 +505,12 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
       feature.properties?.official_name || // Try official_name (often long)
       feature.properties?.['official_name:en']; // Try official_name:en (often long)
 
-    const countryCode = feature.properties?.ISO_A3;
-    const countryCodeA2 = feature.properties?.ISO_A2;
+    const countryCode = 
+      feature.properties?.['ISO3166-1-Alpha-3'] || // Correct property name from GeoJSON
+      feature.properties?.ISO_A3;
+    const countryCodeA2 = 
+      feature.properties?.['ISO3166-1-Alpha-2'] || // Correct property name from GeoJSON
+      feature.properties?.ISO_A2;
 
     let displayName = 'Unknown Region';
     if (countryName && String(countryName).trim() !== '') {
@@ -547,41 +552,44 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
       return;
     }
 
-    // Add tooltips
-    layer.bindTooltip(displayName, {
-      permanent: false,
-      direction: 'center',
-      className: 'country-tooltip',
-    });
+    // Remove any residual popup binding first to avoid duplicates
+    (layer as L.Path).unbindPopup?.();
 
-    // Add click event
+    // Add proper hover tooltip functionality
     layer.on({
-      click: () => {
-        // Get country centroid for placing markers
-        const bounds = (layer as L.FeatureGroup).getBounds();
-        const center = bounds.getCenter();
-
-        onCountrySelect({
-          name: displayName, // Use the determined displayName
-          iso: countryCode || 'N/A',
-          lat: center.lat,
-          lng: center.lng,
-        });
-      },
       mouseover: (e: L.LeafletMouseEvent) => {
-        const layer = e.target as L.Path;
-        layer.setStyle({
+        const target = e.target as L.Path;
+        target.setStyle({
           weight: 3,
-          color: '#666',
+          color: '#FF4081',
           dashArray: '',
-          fillOpacity: 0.9,
+          fillOpacity: 0.8
         });
-        layer.bringToFront();
+        
+        // Create tooltip
+        const tooltip = L.tooltip({
+          permanent: false,
+          direction: 'auto',
+          className: 'country-tooltip'
+        })
+        .setContent(displayName)
+        .setLatLng(e.latlng);
+        
+        target.bindTooltip(tooltip).openTooltip();
       },
       mouseout: (e: L.LeafletMouseEvent) => {
-        const layer = e.target as L.Path;
-        layer.setStyle(getCountryStyle(feature));
+        const target = e.target as L.Path;
+        target.setStyle(getCountryStyle(feature));
+        target.closeTooltip();
       },
+      click: (e: L.LeafletMouseEvent) => {
+        onCountrySelect({
+          name: displayName,
+          iso: countryCode || 'N/A',
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+        });
+      }
     });
   };
 

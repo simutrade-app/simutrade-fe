@@ -1077,7 +1077,7 @@ const StrategiesPage: React.FC = () => {
           <button
             aria-label="Toggle sidebar"
             title="Toggle sidebar"
-            className="absolute top-4 left-4 w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-full z-10 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600 transition-all duration-200"
+            className="absolute top-4 left-4 w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-full z-40 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600 transition-all duration-200"
             onClick={toggleSidebar}
           >
             {collapsed ? <FaChevronRight /> : <FaChevronLeft />}
@@ -1158,7 +1158,7 @@ const StrategiesPage: React.FC = () => {
                   className="flex-1 overflow-y-auto bg-gray-50"
                 >
                   {selectedChat ? (
-                    <div>
+                    <div className="flex flex-col h-full relative">
                       <div className="p-2 bg-gray-100 text-xs text-gray-600 font-mono border-b border-gray-200">
                         Debug: Chat ID: {selectedChat._id} |
                         {selectedChat.sessionId
@@ -1166,12 +1166,14 @@ const StrategiesPage: React.FC = () => {
                           : ''}
                         History Items: {selectedChat.chatHistory?.length || 0}
                       </div>
-                      {/* Always use ChatDetail for consistent history display */}
-                      <ChatDetail
-                        chat={adaptChatForDetail(selectedChat)}
-                        loading={loading}
-                        onSendMessage={handleSendMessage}
-                      />
+                      {/* ChatDetail expands to fill remaining space, keeping its input fixed at the bottom */}
+                      <div className="flex-1">
+                        <ChatDetail
+                          chat={adaptChatForDetail(selectedChat)}
+                          loading={loading}
+                          onSendMessage={handleSendMessage}
+                        />
+                      </div>
                     </div>
                   ) : (
                     renderWelcomeScreen()

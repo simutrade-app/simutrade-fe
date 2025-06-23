@@ -460,7 +460,7 @@ const MissionsPage: React.FC = () => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-gradient-to-r from-green-600 to-green-500 text-white p-5 flex justify-between items-center">
+          <div className="bg-gradient-to-r from-green-600 to-green-500 text-white p-5 flex justify-between items-center" style={{background: 'linear-gradient(to right, rgb(22, 163, 74), rgb(34, 197, 94))'}}>
             <h2 className="text-xl font-bold">{selectedMission.title}</h2>
             <button
               onClick={() => setSelectedMission(null)}
@@ -640,7 +640,7 @@ const MissionsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 pb-12">
       {/* Stats Banner */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-500 text-white py-8 shadow-md">
+      <div className="bg-gradient-to-r from-green-600 to-emerald-500 text-white py-8 shadow-md" style={{background: 'linear-gradient(to right, rgb(22, 163, 74), rgb(16, 185, 129))'}}>
         <div className="container mx-auto px-6">
           <h1 className="text-3xl font-bold mb-8 flex items-center">
             <FaTrophy className="mr-3 text-yellow-300" /> Trade Missions Hub
@@ -848,7 +848,7 @@ const MissionsPage: React.FC = () => {
           <div className="w-full lg:w-1/3 space-y-8">
             {/* Leaderboard */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-              <div className="bg-gradient-to-r from-green-600 to-green-500 text-white p-5">
+              <div className="bg-gradient-to-r from-green-600 to-green-500 text-white p-5" style={{background: 'linear-gradient(to right, rgb(22, 163, 74), rgb(34, 197, 94))'}}>
                 <h2 className="text-xl font-semibold flex items-center">
                   <FaGlobe className="mr-2" /> Global Leaderboard
                 </h2>

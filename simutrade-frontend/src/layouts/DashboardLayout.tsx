@@ -59,7 +59,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           .dashboard-header {
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 60;
             width: 100%;
             padding: 0 24px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);

@@ -256,7 +256,7 @@ const DashboardHeader: React.FC = () => {
             line-height: 64px;
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 500;
           }
 
           .header-container {

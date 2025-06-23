@@ -310,27 +310,20 @@ const StrategiesPage: React.FC = () => {
       // Update existing chat with pending message
       const updatedChat = {
         ...selectedChat,
-        // Save current chat state in history
+        // Save current chat state in history AND add new user message
         chatHistory: [
           ...(selectedChat.chatHistory || []),
-          // Only add the current chat to history if it has responses
-          // This prevents adding empty skeleton messages to history
-          ...(selectedChat.response &&
-          selectedChat.response.length > 0 &&
-          selectedChat.response[0].text
-            ? [
-                {
-                  _id: selectedChat._id,
-                  query: selectedChat.query,
-                  response: selectedChat.response || [],
-                  context_used: selectedChat.context_used || [],
-                },
-              ]
-            : []),
+          // Remove duplication of the main chat; only push the new user message
+          {
+            _id: `temp-user-${Date.now()}`,
+            query,
+            response: [], // No response yet
+            context_used: [],
+          },
         ],
-        // Update the main query and show skeleton response
-        query,
-        response: [{ text: '', _id: `temp-skeleton-${Date.now()}` }],
+        // Keep the main query and response unchanged to preserve order
+        query: selectedChat.query,
+        response: selectedChat.response,
       };
       setSelectedChat(updatedChat);
     } else {
@@ -1185,8 +1178,8 @@ const StrategiesPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Input area - show for all states, including when a chat is selected */}
-                {renderMessageInput()}
+                {/* Input area - only show when no chat is selected */}
+                {!selectedChat && renderMessageInput()}
               </div>
 
               {/* Chat resize handle - only visible when map is shown */}

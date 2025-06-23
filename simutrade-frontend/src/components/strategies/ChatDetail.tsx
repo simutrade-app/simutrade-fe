@@ -142,16 +142,28 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           <>
             {chat && (
               <div className="chat-messages">
-                {/* First render all history items in chronological order */}
+                {/* First display the initial query and response (oldest) */}
+                <ChatMessage isUser={true} message={chat.query} />
+                {chat.response &&
+                  chat.response.filter(response => response.text).map((response, index) => (
+                    <ChatMessage
+                      key={`main-${index}`}
+                      isUser={false}
+                      message={response.text || ''}
+                      contextUsed={chat.context_used}
+                    />
+                  ))}
+
+                {/* Then render chat history (newer messages) */}
                 {chat.chatHistory && chat.chatHistory.length > 0 && (
                   <>
-                    {chat.chatHistory.map((historyItem, historyIndex) => (
+                    {chat.chatHistory.slice().map((historyItem, historyIndex) => (
                       <React.Fragment key={`history-${historyIndex}`}>
                         <ChatMessage
                           isUser={true}
                           message={historyItem.query}
                         />
-                        {historyItem.response &&
+                        {historyItem.response && historyItem.response.length > 0 &&
                           historyItem.response.map(
                             (response, responseIndex) => (
                               <ChatMessage
@@ -162,25 +174,14 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
                               />
                             )
                           )}
+                        {/* Show skeleton only for the last history item that has no response and we're loading */}
+                        {loading && chat.chatHistory && historyIndex === chat.chatHistory.length - 1 && 
+                         (!historyItem.response || historyItem.response.length === 0) && (
+                          <ChatMessage isUser={false} message="" skeleton={true} />
+                        )}
                       </React.Fragment>
                     ))}
                   </>
-                )}
-
-                {/* Then display the main current query and response */}
-                <ChatMessage isUser={true} message={chat.query} />
-                {chat.response &&
-                  chat.response.map((response, index) => (
-                    <ChatMessage
-                      key={`main-${index}`}
-                      isUser={false}
-                      message={response.text || ''}
-                      contextUsed={chat.context_used}
-                    />
-                  ))}
-
-                {loading && !chat.response?.[0]?.text && (
-                  <ChatMessage isUser={false} message="" skeleton={true} />
                 )}
                 <div ref={messagesEndRef} />
               </div>
@@ -189,11 +190,9 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
         )}
       </div>
 
-      {chat && (
-        <div className="chat-input-wrapper">
-          <ChatInput onSendMessage={onSendMessage} loading={loading} />
-        </div>
-      )}
+      <div className="chat-input-wrapper">
+        <ChatInput onSendMessage={onSendMessage} loading={loading} />
+      </div>
 
       <style>{`
         .chat-detail-container {
@@ -255,6 +254,7 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           flex: 1;
           overflow-y: auto;
           padding: 20px;
+          padding-bottom: 80px;
           scroll-behavior: smooth;
           background-color: #f9f9f9;
         }
@@ -385,7 +385,10 @@ const ChatDetail: React.FC<ChatDetailProps> = ({
           100% { transform: rotate(360deg); }
         }
         .chat-input-wrapper {
-          margin-top: auto;
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
           padding: 16px 20px;
           background-color: #ffffff;
           border-top: 1px solid #f0f0f0;

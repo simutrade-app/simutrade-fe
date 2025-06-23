@@ -4,6 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import AppRoutes from './routes';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
+import { StagewiseToolbar } from '@stagewise/toolbar-react';
+import { ReactPlugin } from '@stagewise-plugins/react';
 
 function App() {
   return (
@@ -11,6 +13,7 @@ function App() {
       <AuthProvider>
         <AppRoutes />
         <Toaster />
+        <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
       </AuthProvider>
     </ErrorBoundary>
   );

@@ -25,7 +25,8 @@ import {
   FiBox,
   FiStar,
   FiGift,
-  FiList
+  FiList,
+  FiPlus
 } from 'react-icons/fi';
 import { MdAirplanemodeActive } from 'react-icons/md';
 
@@ -43,9 +44,11 @@ const commodities = [
   { id: 6, name: 'Furniture', icon: <FiBox size={24} />, color: 'rgb(6, 182, 212)', bgColor: 'rgb(240, 253, 250)' },
   { id: 7, name: 'Jewelry', icon: <FiStar size={24} />, color: 'rgb(251, 191, 36)', bgColor: 'rgb(255, 252, 240)' },
   { id: 8, name: 'Toys', icon: <FiGift size={24} />, color: 'rgb(239, 68, 68)', bgColor: 'rgb(254, 242, 242)' },
+  { id: 9, name: 'Add Custom', icon: <FiPlus size={24} />, color: 'rgb(107, 114, 128)', bgColor: 'rgb(243, 244, 246)' },
 ];
 
 const originCountries = [
+  { id: 'CURRENT', name: 'Current Location', flag: '📍' },
   { id: 'IDN', name: 'Indonesia', flag: '🇮🇩' },
   { id: 'MYS', name: 'Malaysia', flag: '🇲🇾' },
   { id: 'SGP', name: 'Singapore', flag: '🇸🇬' },
@@ -126,6 +129,8 @@ interface SimulationPanelProps {
   onResetSimulation: () => void;
   isSimulating: boolean;
   simulationResults: Record<string, any> | null;
+  onOriginCountryChange?: (originCountryId: string) => void;
+  onCurrentLocationDetected?: (location: {lat: number, lng: number, name: string}) => void;
 }
 
 interface FormDataType {
@@ -176,12 +181,14 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   onResetSimulation,
   isSimulating,
   simulationResults,
+  onOriginCountryChange,
+  onCurrentLocationDetected,
 }) => {
   const [formData, setFormData] = useState<FormDataType>({
     commodity: null,
     volume: 100,
     transportMode: 'sea',
-    originCountry: 'IDN',
+    originCountry: '',
     destinationMode: 'map',
     destinationCountry: null,
     destinationName: '',
@@ -196,6 +203,15 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
   const [estimates, setEstimates] = useState({ cost: 0, time: 0 });
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number, name: string} | null>(null);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+
+  // Notify parent when current location is detected
+  useEffect(() => {
+    if (currentLocation && formData.originCountry === 'CURRENT' && onOriginCountryChange) {
+      onOriginCountryChange('CURRENT');
+    }
+  }, [currentLocation, formData.originCountry, onOriginCountryChange]);
 
   // Calculate estimates
   useEffect(() => {
@@ -221,8 +237,78 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
     return 10;
   };
 
+  const detectCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Try to get country name from reverse geocoding
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
+          const data = await response.json();
+          const countryName = data.countryName || 'Current Location';
+          
+          const locationData = {
+            lat: latitude,
+            lng: longitude,
+            name: countryName
+          };
+          setCurrentLocation(locationData);
+          
+          // Notify parent immediately when location is detected
+          if (onCurrentLocationDetected) {
+            onCurrentLocationDetected(locationData);
+          }
+        } catch (error) {
+          console.error('Error getting location name:', error);
+          const locationData = {
+            lat: latitude,
+            lng: longitude,
+            name: 'Current Location'
+          };
+          setCurrentLocation(locationData);
+          
+          // Notify parent immediately when location is detected
+          if (onCurrentLocationDetected) {
+            onCurrentLocationDetected(locationData);
+          }
+        }
+        setIsDetectingLocation(false);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        alert('Unable to retrieve your location: ' + error.message);
+        setIsDetectingLocation(false);
+        // Reset to default country if detection fails
+        setFormData(prev => ({ ...prev, originCountry: 'IDN' }));
+      }
+    );
+  };
+
+  const handleOriginCountryChange = (countryId: string) => {
+    if (countryId === 'CURRENT') {
+      detectCurrentLocation();
+    } else {
+      setCurrentLocation(null);
+    }
+    setFormData(prev => ({ ...prev, originCountry: countryId }));
+    
+    // Notify parent component immediately
+    if (onOriginCountryChange) {
+      onOriginCountryChange(countryId);
+    }
+  };
+
   const isFormComplete = () => {
-    const hasBasicInfo = formData.commodity && formData.originCountry;
+    const hasBasicInfo = formData.commodity && formData.originCountry && formData.originCountry !== '';
     let hasDestination = false;
 
     if (formData.destinationMode === 'map') {
@@ -250,7 +336,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         ? { name: selectedCountry.name, lat: selectedCountry.lat, lng: selectedCountry.lng, iso: selectedCountry.iso }
         : formData.destinationMode === 'dropdown'
           ? { name: formData.destinationName, code: formData.destinationCountry, id: formData.dropdownDestinationId, lat: formData.destinationLat, lng: formData.destinationLng }
-          : { name: formData.destinationName, lat: formData.destinationLat, lng: formData.destinationLng }
+          : { name: formData.destinationName, lat: formData.destinationLat, lng: formData.destinationLng },
+      currentLocation: formData.originCountry === 'CURRENT' ? currentLocation : null,
     };
     onRunSimulation(simulationData);
   };
@@ -843,6 +930,21 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           pointer-events: none;
         }
 
+        .info-box {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          color: rgb(107, 114, 128);
+          gap: 8px;
+          font-size: 14px;
+        }
+
+        /* Hidden variant keeps layout while hiding content */
+        .info-box.hidden {
+          visibility: hidden;
+        }
+
         @media (max-width: 640px) {
           .form-row {
             grid-template-columns: 1fr;
@@ -911,15 +1013,20 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">Origin Country</label>
-            <CustomSelect
+                          <CustomSelect
                   value={formData.originCountry}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, originCountry: value }))}
-              placeholder="Select origin"
+                              onValueChange={handleOriginCountryChange}
+              placeholder="Select origin country"
                 >
                   {originCountries.map((country) => (
                 <Select.Item key={country.id} value={country.id} className="select-item">
                   <Select.ItemText>
-                      {country.flag} {country.name}
+                      {country.id === 'CURRENT' && isDetectingLocation 
+                        ? '🔄 Detecting...' 
+                        : country.id === 'CURRENT'
+                          ? `${country.flag} ${country.name}`
+                          : `${country.flag} ${country.name}`
+                      }
                   </Select.ItemText>
                   <Select.ItemIndicator className="select-item-indicator">
                     <CheckIcon />
@@ -1055,11 +1162,15 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           </div>
         )}
 
-        {formData.destinationMode === 'map' && !selectedCountry && (
-          <div style={{ textAlign: 'center', padding: '20px', color: 'rgb(107, 114, 128)' }}>
-            👆 Click on any country in the map above to select your destination
-          </div>
-        )}
+        {/* Always render info-box to preserve layout; hide content when not needed */}
+        <div
+          className={`info-box ${
+            formData.destinationMode === 'map' && !selectedCountry ? '' : 'hidden'
+          }`}
+        >
+          <InfoCircledIcon />
+          <span>Select a destination country by clicking on the map.</span>
+        </div>
       </div>
 
       {/* Step 3: Transport Mode */}
@@ -1190,7 +1301,12 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
             </div>
             <div className="result-item">
               <p className="result-label">Origin</p>
-              <p className="result-value">{originCountries.find(c => c.id === simulationResults.originCountry)?.name}</p>
+              <p className="result-value">
+                {simulationResults.originCountry === 'CURRENT' && simulationResults.currentLocation
+                  ? simulationResults.currentLocation.name
+                  : originCountries.find(c => c.id === simulationResults.originCountry)?.name
+                }
+              </p>
             </div>
             <div className="result-item">
               <p className="result-label">Destination</p>

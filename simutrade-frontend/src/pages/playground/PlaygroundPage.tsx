@@ -25,7 +25,12 @@ const getAuthToken = () => {
 };
 
 // Function to get coordinates for a country by ID
-const getCountryCoordinates = (countryId: string) => {
+const getCountryCoordinates = (countryId: string, currentLocation?: { lat: number; lng: number } | null) => {
+  // Handle current location
+  if (countryId === 'CURRENT' && currentLocation) {
+    return currentLocation;
+  }
+  
   // In a real app, this would come from a database or API
   // For now, we'll hardcode a few countries for the demo
   const countryCoordinates: {
@@ -57,6 +62,8 @@ const PlaygroundPage: React.FC = () => {
   const [authToken, setAuthToken] = useState<string>(
     'simutrade-demo-token-123'
   ); // Initialize with default demo token
+  const [currentOriginLocation, setCurrentOriginLocation] = useState<{lat: number, lng: number, name: string} | null>(null);
+  const [selectedOriginCountry, setSelectedOriginCountry] = useState<string>('');
 
   // Load auth token on component mount
   useEffect(() => {
@@ -74,6 +81,19 @@ const PlaygroundPage: React.FC = () => {
     setSelectedCountry(countryData);
   };
 
+  const handleOriginCountryChange = (originCountryId: string) => {
+    setSelectedOriginCountry(originCountryId);
+    
+    // Clear current location when switching to regular country
+    if (originCountryId !== 'CURRENT') {
+      setCurrentOriginLocation(null);
+    }
+  };
+
+  const handleCurrentLocationDetected = (location: {lat: number, lng: number, name: string}) => {
+    setCurrentOriginLocation(location);
+  };
+
   const runSimulation = async (formData: any) => {
     const destination = formData.destination || selectedCountry;
 
@@ -84,6 +104,16 @@ const PlaygroundPage: React.FC = () => {
     setSimulating(true);
     // Store the form data for AI analysis
     setSimulationData(formData);
+    
+    // Update origin country selection
+    setSelectedOriginCountry(formData.originCountry);
+    
+    // Update current origin location if it's set
+    if (formData.currentLocation) {
+      setCurrentOriginLocation(formData.currentLocation);
+    } else if (formData.originCountry !== 'CURRENT') {
+      setCurrentOriginLocation(null);
+    }
 
     try {
       // Simulate API call to backend
@@ -96,7 +126,7 @@ const PlaygroundPage: React.FC = () => {
           const timeEstimate = formData.estimatedTime || 14;
 
           // Get origin coordinates based on selected origin country
-          const originCoords = getCountryCoordinates(formData.originCountry);
+          const originCoords = getCountryCoordinates(formData.originCountry, formData.currentLocation);
           const destinationCoords = {
             lat: destination?.lat || formData.destinationLat,
             lng: destination?.lng || formData.destinationLng,
@@ -229,6 +259,8 @@ const PlaygroundPage: React.FC = () => {
                   onCountrySelect={handleCountrySelect}
                   selectedCountry={selectedCountry}
                   simulationResults={results}
+                  currentOriginLocation={currentOriginLocation}
+                  selectedOriginCountry={selectedOriginCountry}
                 />
               )}
             </div>
@@ -244,6 +276,8 @@ const PlaygroundPage: React.FC = () => {
               onResetSimulation={resetSimulation}
               isSimulating={simulating}
               simulationResults={results}
+              onOriginCountryChange={handleOriginCountryChange}
+              onCurrentLocationDetected={handleCurrentLocationDetected}
             />
           </Col>
         </Row>

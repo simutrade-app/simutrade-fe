@@ -147,10 +147,25 @@ const CustomZoomControl = () => {
 // Map Initializer component to set center, zoom limits, etc.
 interface MapInitializerProps {
   destination: { lat: number; lng: number; name?: string } | null;
+  currentOriginLocation?: { lat: number; lng: number; name: string } | null;
+  selectedOriginCountry?: string;
 }
 
-const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
+const MapInitializer: React.FC<MapInitializerProps> = ({ destination, currentOriginLocation, selectedOriginCountry }) => {
   const map = useMap();
+
+  // Country coordinates mapping
+  const getOriginCountryCoordinates = (countryId: string) => {
+    const countryCoordinates: { [key: string]: { lat: number; lng: number; name: string } } = {
+      IDN: { lat: -6.2088, lng: 106.8456, name: 'Indonesia' },
+      MYS: { lat: 3.139, lng: 101.6869, name: 'Malaysia' },
+      SGP: { lat: 1.3521, lng: 103.8198, name: 'Singapore' },
+      THA: { lat: 13.7563, lng: 100.5018, name: 'Thailand' },
+      VNM: { lat: 21.0285, lng: 105.8542, name: 'Vietnam' },
+      PHL: { lat: 14.5995, lng: 120.9842, name: 'Philippines' },
+    };
+    return countryCoordinates[countryId] || null;
+  };
 
   useEffect(() => {
     // Fit the map to a reasonable view on initial load
@@ -172,7 +187,7 @@ const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
     // map.setView([20, 0], 2);
   }, [map]);
 
-  // Add marker and focus map when selected country changes
+  // Add marker and focus map when selected country changes (destination)
   useEffect(() => {
     if (destination && destination.lat && destination.lng) {
       const destinationIcon = L.divIcon({
@@ -199,16 +214,120 @@ const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
       )._destinationMarker = true;
       marker
         .addTo(map)
-        .bindPopup(`Destination: ${destination.name || 'Selected Location'}`)
+        .bindPopup(`Destination: ${destination.name || 'Selected Location'}`);
+
+      // Only focus map on destination if no origin is being shown
+      if (!currentOriginLocation && (!selectedOriginCountry || selectedOriginCountry === 'CURRENT')) {
+        map.flyTo([destination.lat, destination.lng], 4, {
+          animate: true,
+          duration: 1.5,
+        });
+        marker.openPopup();
+      }
+    }
+  }, [destination, map, currentOriginLocation, selectedOriginCountry]);
+
+  // Add marker and focus map when current origin location changes
+  useEffect(() => {
+    if (currentOriginLocation && currentOriginLocation.lat && currentOriginLocation.lng) {
+      const originIcon = L.divIcon({
+        className: 'origin-icon',
+        html: '<div style="background-color:#1890ff;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 10px rgba(0,0,0,0.2);"></div>',
+        iconSize: [20, 20],
+      });
+
+      // Remove existing origin marker if any
+      map.eachLayer((layer: L.Layer) => {
+        if (
+          (layer as L.Marker & { _originMarker?: boolean })
+            ._originMarker
+        ) {
+          map.removeLayer(layer);
+        }
+      });
+
+      const marker = L.marker([currentOriginLocation.lat, currentOriginLocation.lng], {
+        icon: originIcon,
+      });
+      (
+        marker as L.Marker & { _originMarker?: boolean }
+      )._originMarker = true;
+      marker
+        .addTo(map)
+        .bindPopup(`Origin: ${currentOriginLocation.name}`)
         .openPopup();
 
-      // Focus the map on the marker
-      map.flyTo([destination.lat, destination.lng], 4, {
+      // Focus the map on the origin marker
+      map.flyTo([currentOriginLocation.lat, currentOriginLocation.lng], 6, {
         animate: true,
         duration: 1.5,
       });
+    } else {
+      // Remove origin marker if no current location
+      map.eachLayer((layer: L.Layer) => {
+        if (
+          (layer as L.Marker & { _originMarker?: boolean })
+            ._originMarker
+        ) {
+          map.removeLayer(layer);
+        }
+      });
     }
-  }, [destination, map]);
+  }, [currentOriginLocation, map]);
+
+  // Add marker and focus map when regular origin country changes
+  useEffect(() => {
+    if (selectedOriginCountry && selectedOriginCountry !== 'CURRENT' && !currentOriginLocation) {
+      const originCountryData = getOriginCountryCoordinates(selectedOriginCountry);
+      
+      if (originCountryData) {
+        const originIcon = L.divIcon({
+          className: 'origin-icon',
+          html: '<div style="background-color:#1890ff;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 10px rgba(0,0,0,0.2);"></div>',
+          iconSize: [20, 20],
+        });
+
+        // Remove existing origin marker if any
+        map.eachLayer((layer: L.Layer) => {
+          if (
+            (layer as L.Marker & { _originMarker?: boolean })
+              ._originMarker
+          ) {
+            map.removeLayer(layer);
+          }
+        });
+
+        const marker = L.marker([originCountryData.lat, originCountryData.lng], {
+          icon: originIcon,
+        });
+        (
+          marker as L.Marker & { _originMarker?: boolean }
+        )._originMarker = true;
+        marker
+          .addTo(map)
+          .bindPopup(`Origin: ${originCountryData.name}`)
+          .openPopup();
+
+        // Focus the map on the origin marker
+        map.flyTo([originCountryData.lat, originCountryData.lng], 6, {
+          animate: true,
+          duration: 1.5,
+        });
+      }
+    } else if (!selectedOriginCountry || selectedOriginCountry === 'CURRENT') {
+      // Remove origin marker if no regular country is selected or current location is selected
+      if (!currentOriginLocation) {
+        map.eachLayer((layer: L.Layer) => {
+          if (
+            (layer as L.Marker & { _originMarker?: boolean })
+              ._originMarker
+          ) {
+            map.removeLayer(layer);
+          }
+        });
+      }
+    }
+  }, [selectedOriginCountry, currentOriginLocation, map, getOriginCountryCoordinates]);
 
   return null;
 };
@@ -383,12 +502,16 @@ interface InteractiveTradeMapProps {
     transportMode?: string;
     optimalRoute?: L.LatLngLiteral[];
   } | null;
+  currentOriginLocation?: { lat: number; lng: number; name: string } | null;
+  selectedOriginCountry?: string;
 }
 
 const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   onCountrySelect,
   selectedCountry,
   simulationResults,
+  currentOriginLocation,
+  selectedOriginCountry,
 }) => {
   const [countriesGeoJSON, setCountriesGeoJSON] =
     useState<GeoJSON.FeatureCollection | null>(null);
@@ -536,11 +659,6 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
       });
     }
 
-    // Skip for Indonesia (origin country)
-    if (countryCode === 'IDN') {
-      return;
-    }
-
     // Remove any residual popup binding first to avoid duplicates
     (layer as L.Path).unbindPopup?.();
 
@@ -572,12 +690,15 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
         target.closeTooltip();
       },
       click: (e: L.LeafletMouseEvent) => {
-        onCountrySelect({
-          name: displayName,
-          iso: countryCode || 'N/A',
-          lat: e.latlng.lat,
-          lng: e.latlng.lng,
-        });
+        // Skip click handler for Indonesia (origin country) but still allow tooltip
+        if (countryCode !== 'IDN') {
+          onCountrySelect({
+            name: displayName,
+            iso: countryCode || 'N/A',
+            lat: e.latlng.lat,
+            lng: e.latlng.lng,
+          });
+        }
       }
     });
   };
@@ -650,7 +771,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
         )}
 
         <CustomZoomControl />
-        <MapInitializer destination={destination} />
+                    <MapInitializer destination={destination} currentOriginLocation={currentOriginLocation} selectedOriginCountry={selectedOriginCountry} />
       </MapContainer>
 
       {/* Legend */}

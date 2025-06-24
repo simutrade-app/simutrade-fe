@@ -131,6 +131,7 @@ interface SimulationPanelProps {
   simulationResults: Record<string, any> | null;
   onOriginCountryChange?: (originCountryId: string) => void;
   onCurrentLocationDetected?: (location: {lat: number, lng: number, name: string}) => void;
+  externalOriginCountry?: string;
 }
 
 interface FormDataType {
@@ -183,6 +184,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   simulationResults,
   onOriginCountryChange,
   onCurrentLocationDetected,
+  externalOriginCountry,
 }) => {
   const [formData, setFormData] = useState<FormDataType>({
     commodity: null,
@@ -205,6 +207,17 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number, name: string} | null>(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+
+  // Sync external origin country (e.g., when map "locate me" button is used)
+  useEffect(() => {
+    if (externalOriginCountry && externalOriginCountry !== formData.originCountry) {
+      setFormData(prev => ({ ...prev, originCountry: externalOriginCountry }));
+      if (externalOriginCountry === 'CURRENT') {
+        // Trigger detection to fetch current location name if needed
+        detectCurrentLocation();
+      }
+    }
+  }, [externalOriginCountry]);
 
   // Notify parent when current location is detected
   useEffect(() => {
@@ -815,6 +828,34 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           color: rgb(59, 130, 246);
         }
 
+        .skeleton-estimate {
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .skeleton-bar {
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+          border-radius: 4px;
+        }
+
+        .skeleton-bar.large {
+          width: 100px;
+          height: 24px;
+        }
+
+        @keyframes loading {
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
+        }
+
         .collapsible-trigger {
           display: flex;
           align-items: center;
@@ -1221,14 +1262,26 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
               <FiDollarSign size={20} />
             </div>
             <p className="estimate-label">Total Cost</p>
-            <h3 className="estimate-value">${estimates.cost.toLocaleString()}</h3>
+            {estimates.cost > 0 ? (
+              <h3 className="estimate-value">${estimates.cost.toLocaleString()}</h3>
+            ) : (
+              <div className="skeleton-estimate">
+                <div className="skeleton-bar large"></div>
+              </div>
+            )}
           </div>
           <div className="estimate-card time-estimate">
             <div className="estimate-icon">
               <FiClock size={20} />
             </div>
             <p className="estimate-label">Delivery Time</p>
-            <h3 className="estimate-value">{estimates.time} days</h3>
+            {estimates.time > 0 ? (
+              <h3 className="estimate-value">{estimates.time} days</h3>
+            ) : (
+              <div className="skeleton-estimate">
+                <div className="skeleton-bar large"></div>
+              </div>
+            )}
           </div>
         </div>
       )}

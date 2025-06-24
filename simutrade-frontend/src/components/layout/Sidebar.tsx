@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
     {
       key: 'learning',
       icon: <TrophyOutlined />,
-      label: 'Learning',
+      label: 'Discovery',
       children: [
         {
           key: '/missions',
@@ -69,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
         },
         {
           key: '/arena',
-          label: <Link to="/arena">Global Trade Arena</Link>,
+          label: <Link to="/arena">Global Trade Hotspots</Link>,
         },
       ],
     },

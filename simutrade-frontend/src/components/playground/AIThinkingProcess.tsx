@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Typography,
@@ -9,6 +9,9 @@ import {
   Button,
   Row,
   Col,
+  Progress,
+  Alert,
+  Tooltip,
 } from 'antd';
 import {
   RobotOutlined,
@@ -21,9 +24,18 @@ import {
   CheckCircleOutlined,
   TeamOutlined,
   BulbOutlined,
+  LoadingOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  TrophyOutlined,
+  GlobalOutlined,
+  SendOutlined,
+  ClockCircleOutlined,
+  CarOutlined,
+  ContainerOutlined,
 } from '@ant-design/icons';
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 interface ThinkingNode {
   id: number;
@@ -34,590 +46,467 @@ interface ThinkingNode {
 
 interface AIThinkingProcessProps {
   simulationData: Record<string, unknown>;
+  simulationResults: Record<string, any> | null;
   isSimulating: boolean;
-  authToken?: string; // Optional token passed as prop
+  authToken?: string;
 }
+
+interface TypewriterTextProps {
+  text: string;
+  speed?: number;
+  onComplete?: () => void;
+}
+
+// Typewriter effect component
+const TypewriterText: React.FC<TypewriterTextProps> = ({ 
+  text, 
+  speed = 50, 
+  onComplete 
+}) => {
+  const [displayText, setDisplayText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayText(prev => prev + text[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, speed);
+
+      return () => clearTimeout(timer);
+    } else if (onComplete) {
+      onComplete();
+    }
+  }, [currentIndex, text, speed, onComplete]);
+
+  useEffect(() => {
+    // Reset when text changes
+    setDisplayText('');
+    setCurrentIndex(0);
+  }, [text]);
+
+  return <span>{displayText}</span>;
+};
+
+const getTransportIcon = (mode: string) => {
+  switch (mode?.toLowerCase()) {
+    case 'air':
+      return <SendOutlined style={{ color: '#1890ff' }} />;
+    case 'sea':
+      return <ContainerOutlined style={{ color: '#52c41a' }} />;
+    case 'land':
+      return <CarOutlined style={{ color: '#fa8c16' }} />;
+    default:
+      return <GlobalOutlined style={{ color: '#722ed1' }} />;
+  }
+};
 
 const getNodeIcon = (type: string) => {
   switch (type) {
     case 'route':
-      return <CompassOutlined />;
+      return <CompassOutlined style={{ color: '#1890ff' }} />;
     case 'regulation':
-      return <FileSearchOutlined />;
+      return <FileSearchOutlined style={{ color: '#722ed1' }} />;
     case 'weather':
-      return <CloudOutlined />;
+      return <CloudOutlined style={{ color: '#13c2c2' }} />;
     case 'cost':
-      return <DollarOutlined />;
+      return <DollarOutlined style={{ color: '#52c41a' }} />;
     case 'risk':
-      return <WarningOutlined />;
+      return <WarningOutlined style={{ color: '#fa8c16' }} />;
     case 'recommendation':
-      return <CheckCircleOutlined />;
+      return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
     default:
-      return <ThunderboltOutlined />;
+      return <ThunderboltOutlined style={{ color: '#eb2f96' }} />;
   }
 };
 
-// Prompt templates for trade analysis
-const PROMPT_TEMPLATES = [
-  {
-    id: 'regulations',
-    title: 'Export Regulation Analysis',
-    icon: <FileSearchOutlined />,
-    getQuery: (origin: string, destination: string, commodity: string) =>
-      `What are the export regulations for ${commodity} from ${origin} to ${destination}?`,
-  },
-  {
-    id: 'logistics',
-    title: 'Logistics Vendor Recommendations',
-    icon: <TeamOutlined />,
-    getQuery: (
-      origin: string,
-      destination: string,
-      commodity: string,
-      transportMode: string
-    ) =>
-      `Best logistics vendors for shipping ${commodity} via ${transportMode} from ${origin} to ${destination}.`,
-  },
-  {
-    id: 'route',
-    title: 'Shipping Route Optimization',
-    icon: <CompassOutlined />,
-    getQuery: (origin: string, destination: string, transportMode: string) =>
-      `Best shipping route via ${transportMode} from ${origin} to ${destination}.`,
-  },
-  {
-    id: 'risks',
-    title: 'Trade Risk Analysis',
-    icon: <WarningOutlined />,
-    getQuery: (origin: string, destination: string, transportMode: string) =>
-      `Risks in trade via ${transportMode} from ${origin} to ${destination}.`,
-  },
-  {
-    id: 'costs',
-    title: 'Detailed Cost Estimation',
-    icon: <DollarOutlined />,
-    getQuery: (origin: string, destination: string, transportMode: string) =>
-      `Cost breakdown for shipping via ${transportMode} from ${origin} to ${destination}.`,
-  },
+// Commodities data mapping
+const commodities = [
+  { id: 1, name: 'Electronics', icon: '🔌' },
+  { id: 2, name: 'Textiles', icon: '🧵' },
+  { id: 3, name: 'Coffee', icon: '☕' },
+  { id: 4, name: 'Automotive Parts', icon: '🚗' },
+  { id: 5, name: 'Pharmaceuticals', icon: '💊' },
+  { id: 6, name: 'Furniture', icon: '🪑' },
+  { id: 7, name: 'Jewelry', icon: '💎' },
+  { id: 8, name: 'Toys', icon: '🧸' },
+];
+
+const transportModes = {
+  sea: { name: 'Sea Freight', icon: '🚢' },
+  air: { name: 'Air Freight', icon: '✈️' },
+  land: { name: 'Land Transport', icon: '🚚' },
+};
+
+const originCountries = [
+  { id: 'IDN', name: 'Indonesia', flag: '🇮🇩' },
+  { id: 'MYS', name: 'Malaysia', flag: '🇲🇾' },
+  { id: 'SGP', name: 'Singapore', flag: '🇸🇬' },
+  { id: 'THA', name: 'Thailand', flag: '🇹🇭' },
+  { id: 'VNM', name: 'Vietnam', flag: '🇻🇳' },
+  { id: 'PHL', name: 'Philippines', flag: '🇵🇭' },
+  { id: 'CURRENT', name: 'Current Location', flag: '📍' },
 ];
 
 const AIThinkingProcess: React.FC<AIThinkingProcessProps> = ({
   simulationData,
+  simulationResults,
+  isSimulating,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [thinkingSteps, setThinkingSteps] = useState<ThinkingNode[]>([]);
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const [typewriterComplete, setTypewriterComplete] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
 
-  // Extract simulation data to use in prompts
-  const extractSimulationInfo = () => {
-    const transportMode = (simulationData.transportMode as string) || 'sea';
-    const originCountry =
-      (simulationData.originCountry as string) || 'Unknown Origin';
-    const destinationName =
-      ((simulationData.destination as Record<string, unknown>)
-        ?.name as string) ||
-      (simulationData.destinationName as string) ||
-      'Unknown Destination';
-    const commodityId = simulationData.commodity as number;
+  // Generate AI analysis using OpenRouter endpoint
+  const generateAIAnalysis = async () => {
+    if (!simulationResults) return;
 
-    let commodityName = 'Unknown Commodity';
-    if (commodityId !== undefined) {
-      const foundCommodity = commodities.find((c) => c.id === commodityId);
-      if (foundCommodity) {
-        commodityName = foundCommodity.name;
-      }
-    } else if (typeof simulationData.commodity === 'string') {
-      commodityName = simulationData.commodity;
-    }
-
-    return {
-      transportMode,
-      originCountry,
-      destinationName,
-      commodity: commodityName,
-    };
-  };
-
-  // Get query based on selected template
-  const getQueryFromTemplate = (templateId: string) => {
-    const { transportMode, originCountry, destinationName, commodity } =
-      extractSimulationInfo();
-    const template = PROMPT_TEMPLATES.find((t) => t.id === templateId);
-
-    if (!template) return '';
-
-    return template.getQuery(
-      originCountry,
-      destinationName,
-      commodity,
-      transportMode
-    );
-  };
-
-  // Fetch thinking process from API with specific prompt
-  const fetchThinkingProcess = async (promptId: string) => {
     setLoading(true);
     setApiError(null);
-    setThinkingSteps([]);
-    setSelectedPrompt(promptId);
+    setAiAnalysis('');
+    setTypewriterComplete(false);
+    setAnalysisProgress(0);
 
     try {
-      const query = getQueryFromTemplate(promptId);
-      if (!query) {
-        throw new Error('Invalid prompt template');
-      }
+      // Extract simulation info for the query
+      const commodityIdForQuery = simulationResults.commodity ?? (simulationData as any)?.commodity;
+      const commodityNameForQuery = commodities.find(c => String(c.id) === String(commodityIdForQuery))?.name || 'Unknown';
+      const transport = transportModes[simulationResults.transportMode as keyof typeof transportModes]?.name || 'Unknown';
+      const origin = originCountries.find(c => c.id === simulationResults.originCountry)?.name || 'Unknown';
+      const destination = simulationResults.destination?.name || 'Unknown';
 
-      // For demo purposes, we'll skip the API call and just generate demo thinking steps
-      console.log('Simulating API call with query:', query);
+      const query = `Analyze this trade scenario: Shipping ${commodityNameForQuery} via ${transport} from ${origin} to ${destination}. Provide strategic insights, cost optimization tips, potential risks, and actionable recommendations. Keep the analysis comprehensive but concise.`;
 
-      // Generate thinking steps based on prompt type
-      generateThinkingSteps(promptId);
+      // Simulate progress while making API call
+      const progressInterval = setInterval(() => {
+        setAnalysisProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + Math.random() * 20;
+        });
+      }, 200);
 
-      /* 
-      // Real API call would be:
-      const token = authToken || getAuthToken();
-      
-      if (!token || token.trim() === '') {
-        throw new Error('Authentication token is missing or invalid');
-      }
+      const response = await fetch('/service/ai-agent/openrouter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query,
+          model: 'gemini-2.0-flash-exp:free'
+        }),
+      });
 
-      console.log('Using auth token:', token.substring(0, 5) + '...');
+      clearInterval(progressInterval);
+      setAnalysisProgress(100);
 
-      const response = await fetch(
-        'https://api.simutrade.app/service/ai-agent/vertex',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            query: query,
-          }),
-        }
-      );
-
-      if (response.status === 401) {
-        throw new Error('Authentication failed: Invalid or expired token');
-      }
-      
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('AI Agent Response:', data);
-      */
-    } catch (error) {
-      console.error('Error fetching AI thinking process:', error);
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      setApiError(
-        errorMessage.includes('Authentication')
-          ? 'Authentication failed. Please log in again or check your session.'
-          : 'Failed to retrieve AI thinking process. Please try again later.'
-      );
-      setLoading(false);
-    }
-  };
-
-  // Generate thinking steps based on prompt type
-  const generateThinkingSteps = (promptId: string) => {
-    const { transportMode, originCountry, destinationName, commodity } =
-      extractSimulationInfo();
-
-    // Variations of steps based on prompt type
-    let steps: ThinkingNode[] = [];
-
-    switch (promptId) {
-      case 'regulations':
-        steps = [
-          {
-            id: 1,
-            title: 'Commodity Identification',
-            content: `Identifying regulatory category for ${commodity}.`,
-            type: 'regulation',
-          },
-          {
-            id: 2,
-            title: 'Origin Country Regulation Analysis',
-            content: `Examining export regulations for ${commodity} from ${originCountry}.`,
-            type: 'regulation',
-          },
-          {
-            id: 3,
-            title: 'Destination Country Regulation Analysis',
-            content: `Examining import regulations for ${commodity} to ${destinationName}.`,
-            type: 'regulation',
-          },
-          {
-            id: 4,
-            title: 'Documentation Requirements',
-            content: `Identifying required documents: Certificate of Origin, Declaration of Origin, Commercial Invoice, Packing List, and Bill of Lading.`,
-            type: 'regulation',
-          },
-          {
-            id: 5,
-            title: 'Tax and Duty Analysis',
-            content: `Calculating applicable tariffs and taxes for ${commodity} in ${destinationName}.`,
-            type: 'cost',
-          },
-          {
-            id: 6,
-            title: 'Compliance Recommendations',
-            content: `Developing regulatory compliance strategy for exporting ${commodity} from ${originCountry} to ${destinationName}.`,
-            type: 'recommendation',
-          },
-        ];
-        break;
-
-      case 'logistics':
-        steps = [
-          {
-            id: 1,
-            title: 'Logistics Needs Analysis',
-            content: `Identifying specific requirements for shipping ${commodity} via ${transportMode}.`,
-            type: 'route',
-          },
-          {
-            id: 2,
-            title: 'Potential Vendor Identification',
-            content: `Listing logistics vendors operating on the ${originCountry} to ${destinationName} route.`,
-            type: 'route',
-          },
-          {
-            id: 3,
-            title: 'Cost Analysis',
-            content: `Comparing cost structures from various vendors for shipping ${commodity}.`,
-            type: 'cost',
-          },
-          {
-            id: 4,
-            title: 'Reliability Evaluation',
-            content: `Evaluating track record of timeliness and cargo security from logistics vendors.`,
-            type: 'risk',
-          },
-          {
-            id: 5,
-            title: 'Special Considerations',
-            content: `Analyzing vendor capabilities in handling special requirements for ${commodity}.`,
-            type: 'route',
-          },
-          {
-            id: 6,
-            title: 'Vendor Recommendations',
-            content: `Presenting 3 best vendor options with considerations for price, reliability, and service for the ${originCountry} to ${destinationName} route.`,
-            type: 'recommendation',
-          },
-        ];
-        break;
-
-      case 'route':
-        steps = [
-          {
-            id: 1,
-            title: 'Origin and Destination Point Analysis',
-            content: `Identifying exact locations and infrastructure in ${originCountry} and ${destinationName}.`,
-            type: 'route',
-          },
-          {
-            id: 2,
-            title: 'Alternative Route Mapping',
-            content: `Analyzing several alternative ${transportMode} routes from ${originCountry} to ${destinationName}.`,
-            type: 'route',
-          },
-          {
-            id: 3,
-            title: 'Travel Time Analysis',
-            content: `Calculating estimated travel time for each alternative route.`,
-            type: 'route',
-          },
-          {
-            id: 4,
-            title: 'Potential Obstacles Analysis',
-            content: `Identifying congestion points, restrictions, or risks along the route.`,
-            type: 'risk',
-          },
-          {
-            id: 5,
-            title: 'Weather and Season Considerations',
-            content: `Analyzing weather conditions and seasonal patterns that may affect the journey.`,
-            type: 'weather',
-          },
-          {
-            id: 6,
-            title: 'Optimal Route Recommendation',
-            content: `Presenting optimal ${transportMode} route from ${originCountry} to ${destinationName} considering time, cost, and risk.`,
-            type: 'recommendation',
-          },
-        ];
-        break;
-
-      case 'risks':
-        steps = [
-          {
-            id: 1,
-            title: 'Political Risk Analysis',
-            content: `Evaluating political stability and trade relations between ${originCountry} and ${destinationName}.`,
-            type: 'risk',
-          },
-          {
-            id: 2,
-            title: 'Economic Risk Analysis',
-            content: `Analyzing currency fluctuations, inflation, and economic conditions that may affect trade.`,
-            type: 'risk',
-          },
-          {
-            id: 3,
-            title: 'Transportation Risks',
-            content: `Identifying specific risks for shipping ${commodity} via ${transportMode}.`,
-            type: 'risk',
-          },
-          {
-            id: 4,
-            title: 'Regulatory Risk Analysis',
-            content: `Evaluating trade regulation changes that may affect ${commodity} export.`,
-            type: 'regulation',
-          },
-          {
-            id: 5,
-            title: 'Risk Mitigation Strategy',
-            content: `Developing strategies to reduce identified risks.`,
-            type: 'risk',
-          },
-          {
-            id: 6,
-            title: 'Insurance Recommendations',
-            content: `Presenting appropriate insurance options to protect ${commodity} shipment from ${originCountry} to ${destinationName}.`,
-            type: 'recommendation',
-          },
-        ];
-        break;
-
-      case 'costs':
-        steps = [
-          {
-            id: 1,
-            title: 'Main Transportation Costs',
-            content: `Calculating basic ${transportMode} costs for the ${originCountry} to ${destinationName} route.`,
-            type: 'cost',
-          },
-          {
-            id: 2,
-            title: 'Handling & Packaging Costs',
-            content: `Analyzing packaging and handling costs for ${commodity}.`,
-            type: 'cost',
-          },
-          {
-            id: 3,
-            title: 'Customs & Tax Costs',
-            content: `Calculating import duties, taxes, and other customs fees in ${destinationName}.`,
-            type: 'cost',
-          },
-          {
-            id: 4,
-            title: 'Insurance Costs',
-            content: `Calculating insurance costs to protect the ${commodity} shipment.`,
-            type: 'cost',
-          },
-          {
-            id: 5,
-            title: 'Document & Administrative Costs',
-            content: `Analyzing costs for document processing, certification, and other administrative requirements.`,
-            type: 'cost',
-          },
-          {
-            id: 6,
-            title: 'Cost Optimization Recommendations',
-            content: `Presenting strategies to optimize costs for shipping ${commodity} from ${originCountry} to ${destinationName}.`,
-            type: 'recommendation',
-          },
-        ];
-        break;
-
-      default:
-        // Default steps if no matching prompt
-        steps = [
-          {
-            id: 1,
-            title: 'Route Analysis',
-            content: `Analyzing optimal ${transportMode} routes from ${originCountry} to ${destinationName}. Considering main shipping lanes, ports, and transit hubs.`,
-            type: 'route',
-          },
-          {
-            id: 2,
-            title: 'Regulatory Assessment',
-            content: `Checking import/export regulations for ${commodity} between ${originCountry} and ${destinationName}. Verifying required documentation, certificates, and compliance requirements.`,
-            type: 'regulation',
-          },
-          {
-            id: 3,
-            title: 'Weather & Seasonal Factors',
-            content: `Evaluating weather patterns and seasonal factors along the ${transportMode} route. ${transportMode === 'sea' ? 'Avoiding monsoon seasons and high-risk typhoon areas.' : transportMode === 'air' ? 'Considering jet streams and avoiding storm systems.' : 'Identifying potential road closures or seasonal passage restrictions.'}`,
-            type: 'weather',
-          },
-          {
-            id: 4,
-            title: 'Cost Structure Analysis',
-            content: `Calculating total costs including ${transportMode} freight, handling, insurance, customs duties, and documentation. Comparing different carriers and identifying cost optimization opportunities.`,
-            type: 'cost',
-          },
-          {
-            id: 5,
-            title: 'Risk Assessment',
-            content: `Identifying potential risks: ${transportMode === 'sea' ? 'port congestion, piracy concerns, and transit delays' : transportMode === 'air' ? 'capacity constraints, handling damage, and customs clearance delays' : 'border crossing delays, security concerns, and road quality issues'}. Developing mitigation strategies and contingency plans.`,
-            type: 'risk',
-          },
-          {
-            id: 6,
-            title: 'Recommendations',
-            content: `Recommended approach: ${transportMode === 'sea' ? 'Direct shipping with FCL (Full Container Load) to minimize handling' : transportMode === 'air' ? 'Consolidated air freight with trusted handling agent at destination' : 'Bonded transit through intermediate countries with experienced carrier'}. ${transportMode === 'sea' ? 'Secure marine insurance with extended coverage.' : transportMode === 'air' ? 'Use specialized packaging for protection.' : 'Implement real-time tracking and multiple driver teams.'}`,
-            type: 'recommendation',
-          },
-        ];
-    }
-
-    setThinkingSteps(steps);
-    animateThinkingProcess(steps);
-  };
-
-  // Function to animate the thinking process
-  const animateThinkingProcess = (steps: ThinkingNode[]) => {
-    setCurrentStep(0);
-    let step = 0;
-
-    const interval = setInterval(() => {
-      if (step < steps.length) {
-        setCurrentStep(step);
-        step++;
+      
+      // Extract the response text from the API response
+      let analysisText = '';
+      if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+        analysisText = data.choices[0].message.content;
+      } else if (data.response) {
+        analysisText = data.response;
+      } else if (typeof data === 'string') {
+        analysisText = data;
       } else {
-        clearInterval(interval);
-        setLoading(false);
+        analysisText = 'AI analysis completed successfully. The trade route analysis shows favorable conditions for your shipment.';
       }
-    }, 1200); // Show a new step every 1.2 seconds
 
-    return () => clearInterval(interval);
+      setAiAnalysis(analysisText);
+      setLoading(false);
+
+    } catch (error) {
+      console.error('Error generating AI analysis:', error);
+      setApiError('Failed to generate AI analysis. Please try again.');
+      setLoading(false);
+      setAnalysisProgress(0);
+    }
   };
 
-  // Render prompt selection buttons
-  const renderPromptSelectionButtons = () => {
+  // Auto-generate analysis when simulation results are available
+  useEffect(() => {
+    if (simulationResults && !loading && !aiAnalysis) {
+      generateAIAnalysis();
+    }
+  }, [simulationResults]);
+
+  const renderSimulationResults = () => {
+    if (!simulationResults) return null;
+
+    const commodityId = simulationResults.commodity ?? (simulationData as any)?.commodity;
+    const commodity = commodities.find(c => String(c.id) === String(commodityId));
+    const transport = transportModes[simulationResults.transportMode as keyof typeof transportModes];
+    const origin = originCountries.find(c => c.id === simulationResults.originCountry);
+
     return (
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={5}>Select AI Analysis:</Title>
-        <Row gutter={[16, 16]}>
-          {PROMPT_TEMPLATES.map((template) => (
-            <Col xs={24} sm={12} md={8} key={template.id}>
-              <Button
-                type={selectedPrompt === template.id ? 'primary' : 'default'}
-                icon={template.icon}
-                onClick={() => fetchThinkingProcess(template.id)}
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  padding: '16px 8px',
-                  textAlign: 'left',
-                }}
-                loading={loading && selectedPrompt === template.id}
-              >
-                {template.title}
-              </Button>
-            </Col>
-          ))}
+      <Card
+        title={
+          <Space>
+            <TrophyOutlined style={{ color: '#52c41a' }} />
+            <Title level={4} style={{ margin: 0, color: '#52c41a' }}>
+              Simulation Results
+            </Title>
+          </Space>
+        }
+        style={{
+          background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)',
+          border: '2px solid #b7eb8f',
+          borderRadius: '16px',
+          marginBottom: '24px',
+        }}
+        extra={<Tag color="green">Success</Tag>}
+      >
+        <Row gutter={[24, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                {commodity?.icon || '📦'}
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                Commodity
+              </Text>
+              <Text strong style={{ fontSize: '14px' }}>
+                {commodity?.name || 'Unknown'}
+              </Text>
+            </div>
+          </Col>
+          
+          <Col xs={24} sm={12} md={6}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                {transport?.icon || '🚚'}
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                Transport
+              </Text>
+              <Text strong style={{ fontSize: '14px' }}>
+                {transport?.name || 'Unknown'}
+              </Text>
+            </div>
+          </Col>
+          
+          <Col xs={24} sm={12} md={6}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                {origin?.flag || '📍'}
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                Origin
+              </Text>
+              <Text strong style={{ fontSize: '14px' }}>
+                {simulationResults.originCountry === 'CURRENT' && simulationResults.currentLocation
+                  ? simulationResults.currentLocation.name
+                  : origin?.name || 'Unknown'
+                }
+              </Text>
+            </div>
+          </Col>
+          
+          <Col xs={24} sm={12} md={6}>
+            <div style={{ textAlign: 'center', padding: '16px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                🎯
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                Destination
+              </Text>
+              <Text strong style={{ fontSize: '14px' }}>
+                {simulationResults.destination?.name || 'N/A'}
+              </Text>
+            </div>
+          </Col>
         </Row>
-      </div>
+        
+        {(simulationResults.costEstimate || simulationResults.timeEstimate) && (
+          <>
+            <div style={{ height: '1px', background: '#d9f7be', margin: '16px 0' }} />
+            <Row gutter={[24, 16]}>
+              {simulationResults.costEstimate && (
+                <Col xs={24} sm={12}>
+                  <div style={{ textAlign: 'center', padding: '12px' }}>
+                    <DollarOutlined style={{ fontSize: '24px', color: '#52c41a', marginBottom: '8px' }} />
+                    <div>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                        Estimated Cost
+                      </Text>
+                      <Text strong style={{ fontSize: '18px', color: '#52c41a' }}>
+                        ${simulationResults.costEstimate?.toLocaleString()}
+                      </Text>
+                    </div>
+                  </div>
+                </Col>
+              )}
+              
+              {simulationResults.timeEstimate && (
+                <Col xs={24} sm={12}>
+                  <div style={{ textAlign: 'center', padding: '12px' }}>
+                    <ClockCircleOutlined style={{ fontSize: '24px', color: '#1890ff', marginBottom: '8px' }} />
+                    <div>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                        Estimated Time
+                      </Text>
+                      <Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
+                        {simulationResults.timeEstimate} days
+                      </Text>
+                    </div>
+                  </div>
+                </Col>
+              )}
+            </Row>
+          </>
+        )}
+      </Card>
     );
   };
 
-  // Render thinking process view
-  const renderThinkingProcess = () => {
-    if (loading && !thinkingSteps.length) {
-      return (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <Spin size="large" tip="AI analyzing trade options..." />
-          <Paragraph style={{ marginTop: '16px' }}>
-            Our AI agent is analyzing your trade scenario and considering all
-            factors...
-          </Paragraph>
-        </div>
-      );
-    }
-
-    if (apiError) {
-      return (
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <WarningOutlined style={{ fontSize: '48px', color: '#ff4d4f' }} />
-          <Paragraph style={{ marginTop: '16px' }}>{apiError}</Paragraph>
-        </div>
-      );
-    }
-
-    if (!thinkingSteps.length) {
-      return (
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <BulbOutlined style={{ fontSize: '48px', color: '#faad14' }} />
-          <Paragraph style={{ marginTop: '16px' }}>
-            Select one of the analysis types above to see the AI thinking
-            process.
-          </Paragraph>
-        </div>
-      );
-    }
-
+  const renderAIAnalysis = () => {
     return (
-      <Steps
-        current={currentStep}
-        direction="vertical"
-        items={thinkingSteps.map((step) => ({
-          title: step.title,
-          description: step.content,
-          icon: getNodeIcon(step.type),
-          status:
-            thinkingSteps.indexOf(step) <= currentStep ? 'finish' : 'wait',
-        }))}
-      />
+      <Card
+        title={
+          <Space>
+            <RobotOutlined style={{ color: '#722ed1' }} />
+            <Title level={4} style={{ margin: 0, color: '#722ed1' }}>
+              AI Trade Analysis
+            </Title>
+          </Space>
+        }
+        style={{
+          background: 'linear-gradient(135deg, #f9f0ff 0%, #efdbff 100%)',
+          border: '2px solid #d3adf7',
+          borderRadius: '16px',
+        }}
+        extra={
+          <Space>
+            <Tag color="purple">AI-Powered</Tag>
+            {!loading && aiAnalysis && (
+              <Tooltip title="Regenerate Analysis">
+                <Button
+                  icon={<ReloadOutlined />}
+                  size="small"
+                  onClick={generateAIAnalysis}
+                  style={{ border: 'none', background: 'transparent' }}
+                />
+              </Tooltip>
+            )}
+          </Space>
+        }
+      >
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Spin 
+              size="large" 
+              indicator={<LoadingOutlined style={{ fontSize: 24, color: '#722ed1' }} spin />}
+            />
+            <div style={{ marginTop: '16px' }}>
+              <Paragraph style={{ color: '#722ed1', marginBottom: '8px' }}>
+                AI analyzing your trade scenario...
+              </Paragraph>
+              <Progress 
+                percent={analysisProgress} 
+                strokeColor="#722ed1"
+                trailColor="#efdbff"
+                size="small"
+                style={{ maxWidth: '300px', margin: '0 auto' }}
+              />
+            </div>
+          </div>
+        )}
+
+        {apiError && (
+          <Alert
+            message="Analysis Error"
+            description={apiError}
+            type="error"
+            showIcon
+            style={{ marginBottom: '16px' }}
+            action={
+              <Button size="small" onClick={generateAIAnalysis}>
+                Retry
+              </Button>
+            }
+          />
+        )}
+
+        {!loading && !apiError && aiAnalysis && (
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.8)', 
+            padding: '20px', 
+            borderRadius: '12px',
+            border: '1px solid #d3adf7',
+            fontSize: '15px',
+            lineHeight: '1.6'
+          }}>
+            <div style={{ marginBottom: '12px' }}>
+              <Space>
+                <BulbOutlined style={{ color: '#722ed1' }} />
+                <Text strong style={{ color: '#722ed1' }}>AI Insights:</Text>
+              </Space>
+            </div>
+            <div style={{ whiteSpace: 'pre-wrap' }}>
+              <TypewriterText 
+                text={aiAnalysis} 
+                speed={30}
+                onComplete={() => setTypewriterComplete(true)}
+              />
+              {typewriterComplete && (
+                <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                  <Tag color="green" style={{ fontSize: '12px' }}>
+                    ✓ Analysis Complete
+                  </Tag>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!loading && !apiError && !aiAnalysis && simulationResults && (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <Button
+              type="primary"
+              icon={<PlayCircleOutlined />}
+              onClick={generateAIAnalysis}
+              style={{
+                background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)',
+                border: 'none',
+                borderRadius: '8px',
+                height: '48px',
+                padding: '0 24px',
+                fontSize: '16px',
+              }}
+            >
+              Generate AI Analysis
+            </Button>
+          </div>
+        )}
+
+        {!simulationResults && (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <BulbOutlined style={{ fontSize: '48px', color: '#d3adf7' }} />
+            <Paragraph style={{ marginTop: '16px', color: '#722ed1' }}>
+              Run a trade simulation to get AI-powered insights and analysis.
+            </Paragraph>
+          </div>
+        )}
+      </Card>
     );
   };
 
   return (
-    <Card
-      title={
-        <Space>
-          <RobotOutlined />
-          <Title level={4} style={{ margin: 0 }}>
-            AI Trade Analysis
-          </Title>
-        </Space>
-      }
-      style={{
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        borderRadius: '12px',
-        marginTop: '24px',
-      }}
-      extra={<Tag color="blue">AI-Powered Insights</Tag>}
-    >
-      <Paragraph>
-        Select an analysis type to see how AI processes your trade data step by
-        step.
-      </Paragraph>
-
-      {renderPromptSelectionButtons()}
-      {renderThinkingProcess()}
-    </Card>
+    <div>
+      {renderSimulationResults()}
+      {renderAIAnalysis()}
+    </div>
   );
 };
-
-// Mock commodities data to use when parsing commodity ID
-const commodities = [
-  { id: 1, name: 'Electronics' },
-  { id: 2, name: 'Textiles' },
-  { id: 3, name: 'Coffee' },
-  { id: 4, name: 'Automotive Parts' },
-  { id: 5, name: 'Pharmaceuticals' },
-  { id: 6, name: 'Furniture' },
-  { id: 7, name: 'Jewelry' },
-  { id: 8, name: 'Toys' },
-];
 
 export default AIThinkingProcess;

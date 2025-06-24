@@ -25,8 +25,15 @@ L.Icon.Default.mergeOptions({
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// ===============
 // Custom Zoom Controls Component
-const CustomZoomControl = () => {
+// ===============
+
+interface CustomZoomControlProps {
+  onCurrentLocationDetected?: (location: { lat: number; lng: number; name: string }) => void;
+}
+
+const CustomZoomControl: React.FC<CustomZoomControlProps> = ({ onCurrentLocationDetected }) => {
   const map = useMap();
 
   const handleZoomIn = () => {
@@ -71,6 +78,15 @@ const CustomZoomControl = () => {
             marker as L.Marker & { _currentLocation?: boolean }
           )._currentLocation = true;
           marker.addTo(map).bindPopup('Your current location').openPopup();
+
+          // Notify parent component so that origin country can update
+          if (onCurrentLocationDetected) {
+            onCurrentLocationDetected({
+              lat: latitude,
+              lng: longitude,
+              name: 'Current Location',
+            });
+          }
         },
         (error) => {
           message.error('Unable to retrieve your location: ' + error.message);
@@ -504,6 +520,7 @@ interface InteractiveTradeMapProps {
   } | null;
   currentOriginLocation?: { lat: number; lng: number; name: string } | null;
   selectedOriginCountry?: string;
+  onCurrentLocationDetected?: (location: { lat: number; lng: number; name: string }) => void;
 }
 
 const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
@@ -512,6 +529,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   simulationResults,
   currentOriginLocation,
   selectedOriginCountry,
+  onCurrentLocationDetected,
 }) => {
   const [countriesGeoJSON, setCountriesGeoJSON] =
     useState<GeoJSON.FeatureCollection | null>(null);
@@ -770,7 +788,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
           />
         )}
 
-        <CustomZoomControl />
+        <CustomZoomControl onCurrentLocationDetected={onCurrentLocationDetected} />
                     <MapInitializer destination={destination} currentOriginLocation={currentOriginLocation} selectedOriginCountry={selectedOriginCountry} />
       </MapContainer>
 

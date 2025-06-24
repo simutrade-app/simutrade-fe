@@ -92,6 +92,7 @@ const PlaygroundPage: React.FC = () => {
 
   const handleCurrentLocationDetected = (location: {lat: number, lng: number, name: string}) => {
     setCurrentOriginLocation(location);
+    setSelectedOriginCountry('CURRENT');
   };
 
   const runSimulation = async (formData: any) => {
@@ -261,6 +262,7 @@ const PlaygroundPage: React.FC = () => {
                   simulationResults={results}
                   currentOriginLocation={currentOriginLocation}
                   selectedOriginCountry={selectedOriginCountry}
+                  onCurrentLocationDetected={handleCurrentLocationDetected}
                 />
               )}
             </div>
@@ -278,6 +280,7 @@ const PlaygroundPage: React.FC = () => {
               simulationResults={results}
               onOriginCountryChange={handleOriginCountryChange}
               onCurrentLocationDetected={handleCurrentLocationDetected}
+              externalOriginCountry={selectedOriginCountry}
             />
           </Col>
         </Row>
@@ -288,6 +291,7 @@ const PlaygroundPage: React.FC = () => {
             <Col span={24}>
               <AIThinkingProcess
                 simulationData={simulationData}
+                simulationResults={results}
                 isSimulating={simulating}
                 authToken={authToken}
               />

@@ -21,6 +21,7 @@ const PlaygroundPage = lazy(() => import('@/pages/playground/PlaygroundPage'));
 const StrategiesPage = lazy(() => import('@/pages/strategies/StrategiesPage'));
 // Import from the directory instead of the specific file
 const MissionsPage = lazy(() => import('@/pages/missions'));
+const ArenaPage = lazy(() => import('@/pages/arena'));
 
 // Fallback loading component
 const LoadingFallback = () => {
@@ -141,6 +142,18 @@ const AppRoutes: React.FC = () => {
           }
         >
           <Route index element={<MissionsPage />} />
+        </Route>
+
+        {/* Arena Route */}
+        <Route
+          path="/arena"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<ArenaPage />} />
         </Route>
 
         {/* 404 Not Found Route */}

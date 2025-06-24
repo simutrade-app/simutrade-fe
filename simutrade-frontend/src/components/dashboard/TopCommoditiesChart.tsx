@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from 'antd';
 import {
   ResponsiveContainer,
   BarChart,
@@ -21,31 +20,49 @@ interface TopCommoditiesChartProps {
 
 const TopCommoditiesChart: React.FC<TopCommoditiesChartProps> = ({ data }) => {
   return (
-    <Card
-      title="Top Simulated Commodities (by Value)"
-      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-      bodyStyle={{ flexGrow: 1, paddingBottom: '16px' }}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="name"
-            angle={-45}
-            textAnchor="end"
-            height={70}
-            interval={0}
-            tick={{ fontSize: '10px' }}
-          />
-          <YAxis tick={{ fontSize: '10px' }} />
-          <RechartsTooltip />
-          <Bar dataKey="value" fill="#8884d8" />
-        </BarChart>
-      </ResponsiveContainer>
-    </Card>
+    <div className="bg-white border border-gray-200/60 rounded-xl p-6 h-full flex flex-col">
+      <div className="mb-6">
+        <h3 className="text-lg font-medium text-gray-900">Top Commodities</h3>
+      </div>
+      
+      <div className="flex-grow">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <XAxis
+              dataKey="name"
+              angle={-45}
+              textAnchor="end"
+              height={70}
+              interval={0}
+              tick={{ fontSize: '10px' }}
+              stroke="#64748b"
+            />
+            <YAxis 
+              tick={{ fontSize: '10px' }}
+              stroke="#64748b"
+            />
+            <RechartsTooltip
+              contentStyle={{
+                backgroundColor: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '12px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              }}
+            />
+            <Bar 
+              dataKey="value" 
+              fill="hsl(var(--primary))"
+              radius={[2, 2, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 };
 

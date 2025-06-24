@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from 'antd';
 import {
   LineChart,
   Line,
@@ -36,12 +35,12 @@ const TradeSimulationChart: React.FC<TradeSimulationChartProps> = ({
   data = defaultData,
 }) => {
   return (
-    <Card
-      title="Your Trade Simulation Activity"
-      style={{ height: '100%', width: '100%' }}
-      styles={{ body: { height: 'calc(100% - 48px)', padding: '8px' } }}
-    >
-      <div style={{ width: '100%', height: '300px' }}>
+    <div className="bg-white border border-gray-200/60 rounded-xl p-6 h-full">
+      <div className="mb-6">
+        <h3 className="text-lg font-medium text-gray-900">Trade Activity</h3>
+      </div>
+      
+      <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
@@ -49,34 +48,42 @@ const TradeSimulationChart: React.FC<TradeSimulationChartProps> = ({
           >
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.1} />
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" style={{ fontSize: '12px' }} />
-            <YAxis style={{ fontSize: '12px' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <XAxis 
+              dataKey="month" 
+              style={{ fontSize: '12px' }}
+              stroke="#64748b"
+            />
+            <YAxis 
+              style={{ fontSize: '12px' }}
+              stroke="#64748b"
+            />
             <Tooltip
               contentStyle={{
                 backgroundColor: '#fff',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
                 fontSize: '12px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               }}
             />
-            <Legend />
             <Area
               type="monotone"
               dataKey="value"
-              stroke="#4CAF50"
+              stroke="hsl(var(--primary))"
               fillOpacity={1}
               fill="url(#colorValue)"
-              activeDot={{ r: 8 }}
+              strokeWidth={2}
+              activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </Card>
+    </div>
   );
 };
 

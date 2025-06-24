@@ -22,31 +22,25 @@ import ExportOpportunitiesCard from '../../components/dashboard/ExportOpportunit
 
 const { Title, Text } = Typography;
 
-// Mock Data with Ant Design Icons
+// Minimalist KPI data - removed unused "Avg. Efficiency Score"
 const kpiData = [
   {
     title: 'Total Simulations',
     value: '1,280',
     percentageChange: '+15%',
-    icon: <ExperimentOutlined style={{ color: '#1890ff' }} />,
-  },
-  {
-    title: 'Avg. Efficiency Score',
-    value: '82%',
-    percentageChange: '+3%',
-    icon: <RiseOutlined style={{ color: '#52c41a' }} />,
+    icon: <ExperimentOutlined />,
   },
   {
     title: 'Active Trade Missions',
     value: '12',
     percentageChange: '-5%',
-    icon: <GlobalOutlined style={{ color: '#faad14' }} />,
+    icon: <GlobalOutlined />,
   },
   {
     title: 'New Opportunities',
     value: '45',
     percentageChange: '+10%',
-    icon: <BulbOutlined style={{ color: '#722ed1' }} />,
+    icon: <BulbOutlined />,
   },
 ];
 
@@ -113,55 +107,42 @@ const DashboardPage: React.FC = () => {
   const activities = [
     {
       time: '11:45 AM',
-      description: 'New simulation started: Exporting textiles to USA.',
+      action: 'Simulation Started',
+      details: 'Electronics → United States',
+      status: 'Running',
+      value: '$2.4M',
+    },
+    {
+      time: '10:20 AM',
+      action: 'Simulation Completed',
+      details: 'Textiles → Germany',
+      status: 'Success',
+      value: '$1.8M',
     },
     {
       time: 'Yesterday',
-      description: 'Trade Mission "ASEAN Expansion" progress: 75% completed.',
+      action: 'Simulation Completed',
+      details: 'Coffee → Canada',
+      status: 'Success',
+      value: '$950K',
     },
     {
       time: '2 days ago',
-      description:
-        'Trade Pulse: Updated import regulations for Brazil available.',
-    },
-    {
-      time: '3 days ago',
-      description:
-        'Completed simulation: Coffee beans to Canada - Efficiency Score: 88%',
+      action: 'Simulation Failed',
+      details: 'Automotive Parts → Japan',
+      status: 'Failed',
+      value: '$3.2M',
     },
   ];
 
   return (
     <div className="dashboard-page-wrapper" style={{ width: '100%' }}>
-      <div
-        className="welcome-title-container"
-        style={{
-          marginBottom: '24px',
-          width: '100%',
-          display: 'block',
-          whiteSpace: 'normal',
-          wordBreak: 'break-word',
-          writingMode: 'horizontal-tb',
-        }}
-      >
-        <Title
-          level={4}
-          style={{
-            whiteSpace: 'normal',
-            wordBreak: 'break-word',
-            writingMode: 'horizontal-tb',
-            textAlign: 'left',
-            marginBottom: '24px',
-          }}
-        >
-          Welcome back, {String(userData?.name || user?.name || 'User')}
-        </Title>
-      </div>
+
 
       {/* Row 1: KPIs */}
-      <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
+      <Row gutter={[20, 20]} style={{ marginBottom: '32px' }}>
         {kpiData.map((kpi) => (
-          <Col xs={24} sm={12} md={12} lg={6} key={kpi.title}>
+          <Col xs={24} sm={12} md={8} lg={8} key={kpi.title}>
             <KpiCard
               title={kpi.title}
               value={kpi.value}
@@ -224,23 +205,49 @@ const DashboardPage: React.FC = () => {
       {/* Row 5: Recent SimuTrade Activity */}
       <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
         <Col xs={24}>
-          <Card title="Recent SimuTrade Activity">
-            <List
-              bordered
-              className="activity-list"
-              dataSource={activities}
-              renderItem={(item) => (
-                <List.Item className="activity-item">
-                  <Text type="secondary" className="activity-time">
-                    {item.time}
-                  </Text>
-                  <Text className="activity-description">
-                    {item.description}
-                  </Text>
-                </List.Item>
-              )}
-            />
-          </Card>
+          <div className="bg-white border border-gray-200/60 rounded-xl p-6">
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gray-900">Recent Simulations</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {activities.map((activity, index) => (
+                <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-500 w-16">
+                      {activity.time}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        activity.status === 'Running' ? 'bg-blue-500' :
+                        activity.status === 'Success' ? 'bg-green-500' :
+                        'bg-red-500'
+                      }`}></div>
+                      <span className="text-sm font-medium text-gray-900">
+                        {activity.action}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-600">
+                      {activity.details}
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {activity.value}
+                    </div>
+                    <div className={`text-xs px-2 py-1 rounded-md ${
+                      activity.status === 'Running' ? 'bg-blue-50 text-blue-700' :
+                      activity.status === 'Success' ? 'bg-green-50 text-green-700' :
+                      'bg-red-50 text-red-700'
+                    }`}>
+                      {activity.status}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </Col>
       </Row>
     </div>

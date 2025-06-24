@@ -30,11 +30,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <Content
           className="dashboard-content-wrapper"
           style={{
-            margin: '24px',
-            padding: '24px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+            margin: '20px',
+            padding: '32px',
+            backgroundColor: '#fafafa',
             minHeight: '280px',
             overflow: 'auto',
           }}

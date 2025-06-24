@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Select, Collapsible } from 'radix-ui';
-import {
+import { 
   ChevronDownIcon, 
   ChevronRightIcon,
   CheckIcon,
@@ -8,26 +8,18 @@ import {
   GearIcon,
   InfoCircledIcon
 } from '@radix-ui/react-icons';
-import {
+import { 
   FiShoppingCart, 
   FiMapPin, 
   FiTruck, 
+  FiPlane, 
   FiAnchor,
   FiDollarSign,
   FiClock,
   FiRefreshCw,
   FiPackage,
-  FiGlobe,
-  FiCpu,
-  FiScissors,
-  FiCoffee,
-  FiSettings,
-  FiBox,
-  FiStar,
-  FiGift,
-  FiList
+  FiGlobe
 } from 'react-icons/fi';
-import { MdAirplanemodeActive } from 'react-icons/md';
 
 // Import the CountryDropdown component
 import CountryDropdown from './CountryDropdown';
@@ -35,14 +27,14 @@ import type { Country } from './CountrySelectorButton';
 
 // Enhanced commodities with minimalist design
 const commodities = [
-  { id: 1, name: 'Electronics', icon: <FiCpu size={24} />, color: 'rgb(99, 102, 241)', bgColor: 'rgb(238, 242, 255)' },
-  { id: 2, name: 'Textiles', icon: <FiScissors size={24} />, color: 'rgb(34, 197, 94)', bgColor: 'rgb(240, 253, 244)' },
-  { id: 3, name: 'Coffee', icon: <FiCoffee size={24} />, color: 'rgb(245, 158, 11)', bgColor: 'rgb(255, 251, 235)' },
-  { id: 4, name: 'Auto Parts', icon: <FiSettings size={24} />, color: 'rgb(147, 51, 234)', bgColor: 'rgb(250, 245, 255)' },
-  { id: 5, name: 'Pharmaceuticals', icon: <FiPackage size={24} />, color: 'rgb(236, 72, 153)', bgColor: 'rgb(253, 244, 255)' },
-  { id: 6, name: 'Furniture', icon: <FiBox size={24} />, color: 'rgb(6, 182, 212)', bgColor: 'rgb(240, 253, 250)' },
-  { id: 7, name: 'Jewelry', icon: <FiStar size={24} />, color: 'rgb(251, 191, 36)', bgColor: 'rgb(255, 252, 240)' },
-  { id: 8, name: 'Toys', icon: <FiGift size={24} />, color: 'rgb(239, 68, 68)', bgColor: 'rgb(254, 242, 242)' },
+  { id: 1, name: 'Electronics', icon: '📱', color: 'rgb(99, 102, 241)', bgColor: 'rgb(238, 242, 255)' },
+  { id: 2, name: 'Textiles', icon: '🧵', color: 'rgb(34, 197, 94)', bgColor: 'rgb(240, 253, 244)' },
+  { id: 3, name: 'Coffee', icon: '☕', color: 'rgb(245, 158, 11)', bgColor: 'rgb(255, 251, 235)' },
+  { id: 4, name: 'Auto Parts', icon: '🚗', color: 'rgb(147, 51, 234)', bgColor: 'rgb(250, 245, 255)' },
+  { id: 5, name: 'Pharmaceuticals', icon: '💊', color: 'rgb(236, 72, 153)', bgColor: 'rgb(253, 244, 255)' },
+  { id: 6, name: 'Furniture', icon: '🪑', color: 'rgb(6, 182, 212)', bgColor: 'rgb(240, 253, 250)' },
+  { id: 7, name: 'Jewelry', icon: '💎', color: 'rgb(251, 191, 36)', bgColor: 'rgb(255, 252, 240)' },
+  { id: 8, name: 'Toys', icon: '🧸', color: 'rgb(239, 68, 68)', bgColor: 'rgb(254, 242, 242)' },
 ];
 
 const originCountries = [
@@ -91,7 +83,7 @@ const transportModes: { [key: string]: TransportModeInfo } = {
   },
   air: {
     name: 'Air Freight',
-    icon: <MdAirplanemodeActive size={20} />,
+    icon: <FiPlane size={20} />,
     timeMultiplier: 0.5,
     costMultiplier: 2.5,
     description: 'Fastest delivery worldwide',
@@ -282,18 +274,16 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
   return (
     <div className="simulation-panel">
-      <style>{`
+      <style jsx>{`
         .simulation-panel {
           max-width: 800px;
           margin: 0 auto;
           padding: 24px;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: rgba(255, 255, 255, 0.25);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
+          background: white;
           border-radius: 16px;
-          box-shadow: none;
-          border: 1px solid rgba(255, 255, 255, 0.18);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+          border: 1px solid rgb(229, 231, 235);
         }
 
         .panel-header {
@@ -343,11 +333,9 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         .section {
           margin-bottom: 32px;
           padding: 24px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: rgb(249, 250, 251);
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          border: 1px solid rgb(229, 231, 235);
         }
 
         .section-header {
@@ -365,12 +353,12 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         }
 
         .section-badge {
-          padding: 2px 6px;
-          background: rgba(34, 197, 94, 0.15);
-          color: rgb(34, 197, 94);
+          padding: 4px 8px;
+          background: rgb(34, 197, 94);
+          color: white;
           border-radius: 6px;
-          font-size: 11px;
-          font-weight: 600;
+          font-size: 12px;
+          font-weight: 500;
         }
 
         .commodities-grid {
@@ -381,16 +369,13 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         }
 
         .commodity-card {
-          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 8px;
           padding: 16px;
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border: 2px solid rgba(255, 255, 255, 0.2);
+          background: white;
+          border: 2px solid rgb(229, 231, 235);
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.2s;
@@ -455,8 +440,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
         .select-trigger:focus {
           outline: none;
-          border-color: rgb(34, 197, 94);
-          box-shadow: none;
+          border-color: rgb(99, 102, 241);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         .select-icon {
@@ -472,44 +457,12 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           border: 1px solid rgb(229, 231, 235);
           border-radius: 8px;
           padding: 4px;
-          box-shadow: none;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
           z-index: 50;
         }
 
         .select-viewport {
           padding: 4px;
-        }
-
-        .select-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 12px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 14px;
-          color: rgb(55, 65, 81);
-          transition: all 0.2s;
-        }
-
-        .select-item:hover {
-          background: rgb(243, 244, 246);
-        }
-
-        .select-item[data-highlighted] {
-          background: rgb(34, 197, 94);
-          color: white;
-          outline: none;
-        }
-
-        .select-item[data-state="checked"] {
-          background: rgb(239, 246, 255);
-          color: rgb(34, 197, 94);
-        }
-
-        .select-item-indicator {
-          display: flex;
-          align-items: center;
         }
 
         .input-field {
@@ -523,8 +476,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
         .input-field:focus {
           outline: none;
-          border-color: rgb(34, 197, 94);
-          box-shadow: none;
+          border-color: rgb(99, 102, 241);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         .destination-options {
@@ -537,19 +490,15 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         .destination-card {
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
           align-items: center;
           gap: 12px;
           padding: 20px;
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border: 2px solid rgba(255, 255, 255, 0.2);
+          background: white;
+          border: 2px solid rgb(229, 231, 235);
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.2s;
           text-align: center;
-          min-height: 140px;
         }
 
         .destination-card:hover {
@@ -557,7 +506,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         }
 
         .destination-card.selected {
-          border-color: rgb(34, 197, 94);
+          border-color: rgb(59, 130, 246);
           background: rgb(239, 246, 255);
         }
 
@@ -578,27 +527,6 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           margin: 0;
         }
 
-        .destination-card-header {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .destination-card-body {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex: 1;
-        }
-
-        .destination-card-footer {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 18px;
-        }
-
         .transport-modes {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -606,15 +534,12 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         }
 
         .transport-card {
-          position: relative;
           display: flex;
           flex-direction: column;
           gap: 16px;
           padding: 24px;
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border: 2px solid rgba(255, 255, 255, 0.2);
+          background: white;
+          border: 2px solid rgb(229, 231, 235);
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.2s;
@@ -663,8 +588,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
         .benefit-tag {
           padding: 4px 8px;
-          background: rgba(34, 197, 94, 0.1);
-          color: rgb(34, 197, 94);
+          background: rgba(99, 102, 241, 0.1);
+          color: rgb(99, 102, 241);
           border-radius: 6px;
           font-size: 11px;
           font-weight: 500;
@@ -687,11 +612,9 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           align-items: center;
           gap: 8px;
           padding: 20px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
+          background: white;
           border-radius: 12px;
-          box-shadow: none;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .estimate-icon {
@@ -772,8 +695,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           gap: 12px;
           width: 100%;
           padding: 16px;
-          background: rgb(34, 197, 94) !important;
-          color: white !important;
+          background: rgb(99, 102, 241);
+          color: white;
           border: none;
           border-radius: 12px;
           font-size: 16px;
@@ -784,7 +707,9 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         }
 
         .submit-button:hover:not(:disabled) {
-          background: rgb(22, 163, 74) !important;
+          background: rgb(79, 70, 229);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .submit-button:disabled {
@@ -796,10 +721,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
         .results-section {
           padding: 20px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.25);
+          background: rgb(240, 253, 244);
+          border: 1px solid rgb(187, 247, 208);
           border-radius: 12px;
           margin-top: 24px;
         }
@@ -827,22 +750,6 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           margin: 0;
         }
 
-        .done-label {
-          background: rgba(34, 197, 94, 0.15);
-          color: rgb(34, 197, 94);
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 11px;
-          font-weight: 600;
-        }
-
-        .done-label-overlay {
-          position: absolute;
-          top: 6px;
-          right: 6px;
-          pointer-events: none;
-        }
-
         @media (max-width: 640px) {
           .form-row {
             grid-template-columns: 1fr;
@@ -866,7 +773,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       <div className="panel-header">
         <div>
           <div className="header-title">
-            <FiPackage size={24} color="rgb(34, 197, 94)" />
+            <FiPackage size={24} color="rgb(99, 102, 241)" />
             <h2>Trade Simulation</h2>
           </div>
           <p className="header-subtitle">Configure your trade parameters with our streamlined interface</p>
@@ -882,9 +789,9 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       {/* Step 1: Commodity & Origin */}
       <div className="section">
         <div className="section-header">
-          <FiShoppingCart size={20} color="rgb(34, 197, 94)" />
+          <FiShoppingCart size={20} color="rgb(99, 102, 241)" />
           <h3 className="section-title">Trade Setup</h3>
-          {selectedCommodity && <span className="section-badge">Done</span>}
+          {selectedCommodity && <span className="section-badge">✓</span>}
         </div>
         
         <div className="commodities-grid">
@@ -898,12 +805,9 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
               } as React.CSSProperties}
               onClick={() => setFormData(prev => ({ ...prev, commodity: commodity.id }))}
             >
-              <span 
-                className="done-label-overlay done-label"
-                style={{ opacity: formData.commodity === commodity.id ? 1 : 0 }}
-              >Done</span>
               <div className="commodity-icon">{commodity.icon}</div>
               <p className="commodity-name">{commodity.name}</p>
+              {formData.commodity === commodity.id && <CheckIcon />}
             </div>
           ))}
         </div>
@@ -912,14 +816,14 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           <div className="form-group">
             <label className="form-label">Origin Country</label>
             <CustomSelect
-                  value={formData.originCountry}
+              value={formData.originCountry}
               onValueChange={(value) => setFormData(prev => ({ ...prev, originCountry: value }))}
               placeholder="Select origin"
-                >
-                  {originCountries.map((country) => (
+            >
+              {originCountries.map((country) => (
                 <Select.Item key={country.id} value={country.id} className="select-item">
                   <Select.ItemText>
-                      {country.flag} {country.name}
+                    {country.flag} {country.name}
                   </Select.ItemText>
                   <Select.ItemIndicator className="select-item-indicator">
                     <CheckIcon />
@@ -949,7 +853,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
           <FiMapPin size={20} color="rgb(34, 197, 94)" />
           <h3 className="section-title">Destination</h3>
           {(selectedCountry || formData.dropdownDestinationId || (formData.destinationMode === 'custom' && formData.destinationName)) && 
-            <span className="section-badge">Done</span>
+            <span className="section-badge">✓</span>
           }
         </div>
 
@@ -958,76 +862,52 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
             className={`destination-card ${formData.destinationMode === 'map' ? 'selected' : ''}`}
             onClick={() => setFormData(prev => ({ ...prev, destinationMode: 'map' }))}
           >
-            <div className="destination-card-header">
-              <div className="destination-icon"><FiGlobe size={28} /></div>
-              <h4 className="destination-title">Select on Map</h4>
-            </div>
-            <div className="destination-card-body">
-              <p className="destination-subtitle">Click any country above</p>
-            </div>
-            <div className="destination-card-footer">
-              {formData.destinationMode === 'map' && selectedCountry ? (
-                <span style={{ color: 'rgb(59, 130, 246)', fontSize: '12px', fontWeight: '600' }}>
-                  {selectedCountry.name}
-                </span>
-              ) : (
-                <span style={{ opacity: 0, fontSize: '12px' }}>placeholder</span>
-              )}
-            </div>
+            <div className="destination-icon">🗺️</div>
+            <h4 className="destination-title">Select on Map</h4>
+            <p className="destination-subtitle">Click any country above</p>
+            {formData.destinationMode === 'map' && selectedCountry && (
+              <span style={{ color: 'rgb(59, 130, 246)', fontSize: '12px', fontWeight: '600' }}>
+                {selectedCountry.name}
+              </span>
+            )}
           </div>
 
           <div
             className={`destination-card ${formData.destinationMode === 'dropdown' ? 'selected' : ''}`}
             onClick={() => setFormData(prev => ({ ...prev, destinationMode: 'dropdown' }))}
           >
-            <div className="destination-card-header">
-              <div className="destination-icon"><FiList size={28} /></div>
-              <h4 className="destination-title">Choose from List</h4>
-            </div>
-            <div className="destination-card-body">
-              <p className="destination-subtitle">Popular destinations</p>
-            </div>
-            <div className="destination-card-footer">
-              {formData.destinationMode === 'dropdown' && formData.dropdownDestinationId ? (
-                <span style={{ color: 'rgb(59, 130, 246)', fontSize: '12px', fontWeight: '600' }}>
-                  {formData.destinationName}
-                </span>
-              ) : (
-                <span style={{ opacity: 0, fontSize: '12px' }}>placeholder</span>
-              )}
-            </div>
+            <div className="destination-icon">📋</div>
+            <h4 className="destination-title">Choose from List</h4>
+            <p className="destination-subtitle">Popular destinations</p>
+            {formData.destinationMode === 'dropdown' && formData.dropdownDestinationId && (
+              <span style={{ color: 'rgb(59, 130, 246)', fontSize: '12px', fontWeight: '600' }}>
+                {formData.destinationName}
+              </span>
+            )}
           </div>
 
           <div
             className={`destination-card ${formData.destinationMode === 'custom' ? 'selected' : ''}`}
             onClick={() => setFormData(prev => ({ ...prev, destinationMode: 'custom' }))}
           >
-            <div className="destination-card-header">
-              <div className="destination-icon"><FiMapPin size={28} /></div>
-              <h4 className="destination-title">Custom Location</h4>
-            </div>
-            <div className="destination-card-body">
-              <p className="destination-subtitle">Enter coordinates</p>
-            </div>
-            <div className="destination-card-footer">
-              {formData.destinationMode === 'custom' && formData.destinationName ? (
-                <span style={{ color: 'rgb(59, 130, 246)', fontSize: '12px', fontWeight: '600' }}>
-                  {formData.destinationName}
-                </span>
-              ) : (
-                <span style={{ opacity: 0, fontSize: '12px' }}>placeholder</span>
-              )}
-            </div>
+            <div className="destination-icon">📍</div>
+            <h4 className="destination-title">Custom Location</h4>
+            <p className="destination-subtitle">Enter coordinates</p>
+            {formData.destinationMode === 'custom' && formData.destinationName && (
+              <span style={{ color: 'rgb(59, 130, 246)', fontSize: '12px', fontWeight: '600' }}>
+                {formData.destinationName}
+              </span>
+            )}
           </div>
         </div>
 
         {formData.destinationMode === 'dropdown' && (
-              <CountryDropdown
-                type="destination"
-                value={formData.dropdownDestinationId || undefined}
-                onChange={handleDestinationDropdownChange}
-                placeholder="Select destination country"
-              />
+          <CountryDropdown
+            type="destination"
+            value={formData.dropdownDestinationId || undefined}
+            onChange={handleDestinationDropdownChange}
+            placeholder="Select destination country"
+          />
         )}
 
         {formData.destinationMode === 'custom' && (
@@ -1037,8 +917,8 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
               <input
                 type="text"
                 className="input-field"
-                      placeholder="e.g., Port of Rotterdam"
-                      value={formData.destinationName}
+                placeholder="e.g., Port of Rotterdam"
+                value={formData.destinationName}
                 onChange={(e) => setFormData(prev => ({ ...prev, destinationName: e.target.value }))}
               />
             </div>
@@ -1047,7 +927,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
               <input
                 type="number"
                 className="input-field"
-                      placeholder="e.g., 51.9498"
+                placeholder="e.g., 51.9498"
                 value={formData.destinationLat || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, destinationLat: parseFloat(e.target.value) || null }))}
               />
@@ -1067,15 +947,15 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         <div className="section-header">
           <FiTruck size={20} color="rgb(147, 51, 234)" />
           <h3 className="section-title">Transport Method</h3>
-          <span className="section-badge">Done</span>
+          <span className="section-badge">✓</span>
         </div>
 
         <div className="transport-modes">
           {Object.entries(transportModes).map(([key, mode]) => (
             <div
-                  key={key}
+              key={key}
               className={`transport-card ${formData.transportMode === key ? 'selected' : ''}`}
-                  style={{
+              style={{
                 '--transport-color': mode.color,
                 '--transport-bg': mode.bgColor,
               } as React.CSSProperties}
@@ -1093,10 +973,11 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
                   <span key={index} className="benefit-tag">{benefit}</span>
                 ))}
               </div>
-              <span 
-                className="done-label-overlay done-label"
-                style={{ opacity: formData.transportMode === key ? 1 : 0 }}
-              >Done</span>
+              {formData.transportMode === key && (
+                <div style={{ textAlign: 'center', color: 'rgb(34, 197, 94)' }}>
+                  <CheckIcon />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1126,9 +1007,9 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       <Collapsible.Root open={showAdvanced} onOpenChange={setShowAdvanced}>
         <Collapsible.Trigger className="collapsible-trigger">
           <ChevronRightIcon className="collapsible-icon" />
-          <GearIcon />
+          <GearIcon size={16} />
           <span>Advanced Settings</span>
-          <InfoCircledIcon style={{ marginLeft: 'auto', color: 'rgb(34, 197, 94)' }} />
+          <InfoCircledIcon size={16} style={{ marginLeft: 'auto', color: 'rgb(99, 102, 241)' }} />
         </Collapsible.Trigger>
         <Collapsible.Content className="collapsible-content">
           <div className="form-row">
@@ -1137,26 +1018,26 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
               <input
                 type="number"
                 className="input-field"
-                  value={formData.customFields.price}
+                value={formData.customFields.price}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
                   customFields: { ...prev.customFields, price: parseFloat(e.target.value) || 0 }
                 }))}
-                  min={0}
-                />
+                min={0}
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Item Weight (kg per unit)</label>
               <input
                 type="number"
                 className="input-field"
-                  value={formData.customFields.weight}
+                value={formData.customFields.weight}
                 onChange={(e) => setFormData(prev => ({
                   ...prev,
                   customFields: { ...prev.customFields, weight: parseFloat(e.target.value) || 0 }
                 }))}
-                  min={0}
-                />
+                min={0}
+              />
             </div>
           </div>
         </Collapsible.Content>
@@ -1165,10 +1046,10 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       {/* Submit Button */}
       <button
         className="submit-button"
-              onClick={handleSubmit}
+        onClick={handleSubmit}
         disabled={!isFormComplete() || isSimulating}
       >
-        <RocketIcon />
+        <RocketIcon size={20} />
         {isSimulating ? 'Running Simulation...' : 'Run Trade Simulation'}
       </button>
 
@@ -1176,7 +1057,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       {simulationResults && (
         <div className="results-section">
           <div className="section-header">
-            <CheckIcon style={{ color: 'rgb(34, 197, 94)' }} />
+            <CheckIcon size={20} color="rgb(34, 197, 94)" />
             <h3 className="section-title">Simulation Results</h3>
           </div>
           <div className="results-grid">
@@ -1203,4 +1084,4 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   );
 };
 
-export default SimulationPanel;
+export default SimulationPanel; 

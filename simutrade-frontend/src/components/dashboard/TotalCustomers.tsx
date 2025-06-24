@@ -1,13 +1,10 @@
 import React from 'react';
-import { Card, Typography, Avatar, Progress, Space, Tag } from 'antd';
-import { TeamOutlined, ArrowUpOutlined } from '@ant-design/icons';
-
-const { Text } = Typography;
+import { cn } from '@/lib/utils';
 
 interface CustomerData {
   count: number;
   growthPercent: number;
-  avatars: string[]; // URLs to customer avatars
+  avatars: string[];
 }
 
 interface TotalCustomersProps {
@@ -28,109 +25,65 @@ const defaultData: CustomerData = {
 const TotalCustomers: React.FC<TotalCustomersProps> = ({
   data = defaultData,
 }) => {
-  const activeUsers = 1646; // From screenshot
-  const activePercentage = 68; // From screenshot
-  const greenColor = '#52c41a';
-
   return (
-    <Card
-      title={
-        <Space>
-          <TeamOutlined style={{ color: greenColor }} />
-          <span>Total Customers</span>
-        </Space>
-      }
-      extra={<Text style={{ color: greenColor }}>Show All →</Text>}
-      style={{
-        height: '100%',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-        borderRadius: '8px',
-      }}
-      bodyStyle={{ padding: '16px 24px' }}
-    >
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        {/* Customer Count Section */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Space align="center">
-            <TeamOutlined style={{ fontSize: '28px', color: '#333' }} />
-            <Text
-              style={{
-                fontSize: '32px',
-                fontWeight: 'bold',
-                color: '#333',
-                margin: 0,
-              }}
-            >
-              2,420
-            </Text>
-          </Space>
-          <Tag color={greenColor} style={{ margin: 0, fontWeight: 'bold' }}>
-            NEW
-          </Tag>
-        </div>
-
-        {/* Growth Section */}
-        <Space align="center">
-          <Text strong style={{ color: greenColor, fontSize: '16px' }}>
-            <ArrowUpOutlined /> +25% growth
-          </Text>
-          <Text type="secondary">this month</Text>
-        </Space>
-
-        {/* Active Users Section */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '8px',
-            }}
-          >
-            <Text>Active users</Text>
-            <Text strong>
-              {activeUsers} ({activePercentage}%)
-            </Text>
+    <div className="bg-white border border-gray-200/60 rounded-xl p-6 h-full">
+      <div className="flex justify-between items-start mb-6">
+        <h3 className="text-lg font-medium text-gray-900">Total Customers</h3>
+        <button className="text-sm text-primary hover:text-secondary-dark">
+          View all →
+        </button>
+      </div>
+      
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-semibold text-gray-900">
+            {data.count.toLocaleString()}
           </div>
-          <Progress
-            percent={activePercentage}
-            showInfo={false}
-            strokeColor={greenColor}
-            trailColor="#f0f0f0"
-            style={{ marginBottom: '8px' }}
-          />
+          <div className="text-sm font-medium text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md">
+            +{data.growthPercent}%
+          </div>
         </div>
+        
+        <div className="text-sm text-gray-500">
+          1,646 active this month
+        </div>
+        
+        <div className="flex -space-x-2">
+          {data.avatars.slice(0, 4).map((avatar, index) => (
+            <img
+              key={index}
+              src={avatar}
+              alt=""
+              className="w-8 h-8 rounded-full border-2 border-white bg-gray-100"
+            />
+          ))}
+          <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+            +7
+          </div>
+        </div>
+      </div>
 
-        {/* Recent Customers Section */}
-        <div>
-          <Text
-            type="secondary"
-            style={{ display: 'block', marginBottom: '12px' }}
-          >
-            Recently active customers
-          </Text>
-          <Avatar.Group maxCount={5} maxStyle={{ backgroundColor: greenColor }}>
-            {data.avatars.map((avatar, index) => (
-              <Avatar
-                key={index}
-                src={avatar}
-                size={40}
-                style={{ border: '2px solid #fff' }}
-              />
-            ))}
-            <Avatar style={{ backgroundColor: '#f56a00', fontSize: '16px' }}>
-              A
-            </Avatar>
-            <Avatar style={{ backgroundColor: greenColor }}>+7</Avatar>
-          </Avatar.Group>
+      {/* Additional customer insights */}
+      <div className="border-t border-gray-100 pt-4 mt-6">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div>
+            <div className="text-sm font-medium text-gray-900">892</div>
+            <div className="text-xs text-gray-500">New</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-900">1,528</div>
+            <div className="text-xs text-gray-500">Returning</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-emerald-600">94.2%</div>
+            <div className="text-xs text-gray-500">Retention</div>
+          </div>
         </div>
-      </Space>
-    </Card>
+        <div className="mt-3 text-center">
+          <div className="text-xs text-gray-600">Average session: 24 minutes</div>
+        </div>
+      </div>
+    </div>
   );
 };
 

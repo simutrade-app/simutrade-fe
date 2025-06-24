@@ -43,22 +43,22 @@ const DashboardHeader: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
-      title: 'Trade Executed',
-      message: 'Your order to buy 10 shares of AAPL was executed successfully',
+      title: 'Import Shipment Cleared',
+      message: 'Your shipment of 500 electronic items has cleared customs successfully.',
       time: '10 minutes ago',
       read: false,
     },
     {
       id: '2',
-      title: 'New Mission Available',
-      message: 'A new trading mission is available in your dashboard',
+      title: 'New Export Opportunity',
+      message: 'A new export opportunity to Germany has been added to your dashboard.',
       time: '2 hours ago',
       read: false,
     },
     {
       id: '3',
-      title: 'Portfolio Update',
-      message: 'Your portfolio has increased by 2.5% today',
+      title: 'Tariff Update',
+      message: 'Tariffs for agricultural products to Canada have been reduced by 2%.',
       time: 'Yesterday',
       read: true,
     },

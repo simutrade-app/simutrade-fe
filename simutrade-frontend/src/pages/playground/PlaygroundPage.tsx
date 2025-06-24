@@ -201,7 +201,7 @@ const PlaygroundPage: React.FC = () => {
           <Col span={24}>
             <div
               style={{
-                height: '500px',
+                height: '600px',
                 width: '100%',
                 borderRadius: '12px',
                 overflow: 'hidden',

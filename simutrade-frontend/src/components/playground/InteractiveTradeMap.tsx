@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../../styles/leaflet-map.css';
 import L from 'leaflet';
 import { Spin, Button, Tooltip, message } from 'antd';
 import {
@@ -152,26 +153,14 @@ const MapInitializer: React.FC<MapInitializerProps> = ({ destination }) => {
   const map = useMap();
 
   useEffect(() => {
-    // Set proper zoom level constraints
-    map.setMinZoom(2);
-    map.setMaxZoom(7);
-
-    // Define the bounds for panning and fitting
-    // Adjusted latitudes to potentially improve fitting and reduce polar white space.
-    const southWest = L.latLng(-60, -180);
-    const northEast = L.latLng(80, 180);
+    // Fit the map to a reasonable view on initial load
+    const southWest = L.latLng(-50, -170);
+    const northEast = L.latLng(70, 170);
     const bounds = L.latLngBounds(southWest, northEast);
 
-    map.setMaxBounds(bounds);
-
-    // Fit the map to these bounds initially.
-    // This will select an appropriate zoom level (not less than minZoom)
-    // and center the map to display the specified bounds as best as possible.
-    map.fitBounds(bounds);
-
-    // Handle bounds on drag events to prevent dragging outside
-    map.on('drag', () => {
-      map.panInsideBounds(bounds, { animate: false });
+    map.fitBounds(bounds, {
+      padding: [0, 0],
+      maxZoom: 3,
     });
 
     // Make sure the map is properly sized to the container after initial setup
@@ -625,23 +614,22 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
     >
       <MapContainer
         center={L.latLng(20, 0)}
-        zoom={2}
+        zoom={3}
         style={{
           height: '100%',
           width: '100%',
           minHeight: '550px',
-          background: '#a2d9ff',
           borderRadius: '12px',
         }}
         zoomControl={false}
         attributionControl={false}
-        minZoom={2}
+        minZoom={3}
         maxZoom={7}
+        worldCopyJump={true}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          noWrap={true}
         />
 
         {countriesGeoJSON && (

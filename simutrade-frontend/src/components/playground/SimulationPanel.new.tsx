@@ -12,7 +12,6 @@ import {
   FiShoppingCart, 
   FiMapPin, 
   FiTruck, 
-  FiPlane, 
   FiAnchor,
   FiDollarSign,
   FiClock,
@@ -83,7 +82,7 @@ const transportModes: { [key: string]: TransportModeInfo } = {
   },
   air: {
     name: 'Air Freight',
-    icon: <FiPlane size={20} />,
+    icon: <FiPackage size={20} />,
     timeMultiplier: 0.5,
     costMultiplier: 2.5,
     description: 'Fastest delivery worldwide',
@@ -274,7 +273,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
   return (
     <div className="simulation-panel">
-      <style jsx>{`
+      <style>{`
         .simulation-panel {
           max-width: 800px;
           margin: 0 auto;
@@ -1007,9 +1006,9 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       <Collapsible.Root open={showAdvanced} onOpenChange={setShowAdvanced}>
         <Collapsible.Trigger className="collapsible-trigger">
           <ChevronRightIcon className="collapsible-icon" />
-          <GearIcon size={16} />
+          <GearIcon />
           <span>Advanced Settings</span>
-          <InfoCircledIcon size={16} style={{ marginLeft: 'auto', color: 'rgb(99, 102, 241)' }} />
+          <InfoCircledIcon style={{ marginLeft: 'auto', color: 'rgb(99, 102, 241)' }} />
         </Collapsible.Trigger>
         <Collapsible.Content className="collapsible-content">
           <div className="form-row">
@@ -1049,7 +1048,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         onClick={handleSubmit}
         disabled={!isFormComplete() || isSimulating}
       >
-        <RocketIcon size={20} />
+        <RocketIcon />
         {isSimulating ? 'Running Simulation...' : 'Run Trade Simulation'}
       </button>
 
@@ -1057,7 +1056,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
       {simulationResults && (
         <div className="results-section">
           <div className="section-header">
-            <CheckIcon size={20} color="rgb(34, 197, 94)" />
+            <CheckIcon style={{ color: 'rgb(34, 197, 94)' }} />
             <h3 className="section-title">Simulation Results</h3>
           </div>
           <div className="results-grid">

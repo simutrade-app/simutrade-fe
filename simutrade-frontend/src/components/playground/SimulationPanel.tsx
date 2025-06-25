@@ -1336,38 +1336,7 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         {isSimulating ? 'Running Simulation...' : 'Run Trade Simulation'}
       </button>
 
-      {/* Results */}
-      {simulationResults && (
-        <div className="results-section">
-          <div className="section-header">
-            <CheckIcon style={{ color: 'rgb(34, 197, 94)' }} />
-            <h3 className="section-title">Simulation Results</h3>
-          </div>
-          <div className="results-grid">
-            <div className="result-item">
-              <p className="result-label">Commodity</p>
-              <p className="result-value">{commodities.find(c => c.id === simulationResults.commodity)?.name}</p>
-            </div>
-            <div className="result-item">
-              <p className="result-label">Transport</p>
-              <p className="result-value">{transportModes[simulationResults.transportMode]?.name}</p>
-            </div>
-            <div className="result-item">
-              <p className="result-label">Origin</p>
-              <p className="result-value">
-                {simulationResults.originCountry === 'CURRENT' && simulationResults.currentLocation
-                  ? simulationResults.currentLocation.name
-                  : originCountries.find(c => c.id === simulationResults.originCountry)?.name
-                }
-              </p>
-            </div>
-            <div className="result-item">
-              <p className="result-label">Destination</p>
-              <p className="result-value">{simulationResults.destination?.name || 'N/A'}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Results section removed: now displayed in dedicated Results tab */}
     </div>
   );
 };

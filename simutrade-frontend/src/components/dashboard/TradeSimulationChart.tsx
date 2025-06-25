@@ -34,6 +34,7 @@ const defaultData: DataPoint[] = [
 const TradeSimulationChart: React.FC<TradeSimulationChartProps> = ({
   data = defaultData,
 }) => {
+  const CHART_COLOR = '#0E9F6E'; // Custom color for the chart line and area
   return (
     <div className="bg-white border border-gray-200/60 rounded-xl p-6 h-full">
       <div className="mb-6">
@@ -48,8 +49,8 @@ const TradeSimulationChart: React.FC<TradeSimulationChartProps> = ({
           >
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                <stop offset="5%" stopColor={CHART_COLOR} stopOpacity={0.8} />
+                <stop offset="95%" stopColor={CHART_COLOR} stopOpacity={0.1} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -74,11 +75,11 @@ const TradeSimulationChart: React.FC<TradeSimulationChartProps> = ({
             <Area
               type="monotone"
               dataKey="value"
-              stroke="hsl(var(--primary))"
+              stroke={CHART_COLOR}
               fillOpacity={1}
               fill="url(#colorValue)"
               strokeWidth={2}
-              activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
+              activeDot={{ r: 6, fill: CHART_COLOR }}
             />
           </AreaChart>
         </ResponsiveContainer>

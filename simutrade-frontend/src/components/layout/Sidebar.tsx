@@ -64,38 +64,41 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       label: 'Discovery',
       children: [
         {
-          key: '/missions',
-          label: <Link to="/missions">Trade Missions</Link>,
-        },
-        {
           key: '/arena',
           label: <Link to="/arena">Global Trade Hotspots</Link>,
+        },
+        {
+          key: '/missions',
+          label: (
+            <span style={{ color: '#d9d9d9', cursor: 'not-allowed' }}>
+              Trade Missions <small style={{ fontSize: '10px', fontWeight: 'normal' }}>(Coming Soon)</small>
+            </span>
+          ),
+          disabled: true,
         },
       ],
     },
     {
       key: 'analytics',
       icon: <AppstoreOutlined />,
-      label: 'Analytics',
-      children: [
-        {
-          key: '/analytics/overview',
-          label: <Link to="/analytics/overview">Overview</Link>,
-        },
-        {
-          key: '/analytics/transaction',
-          label: <Link to="/analytics/transaction">Transaction</Link>,
-        },
-        {
-          key: '/analytics/projects',
-          label: <Link to="/analytics/projects">Projects</Link>,
-        },
-      ],
+      label: (
+        <span style={{ color: '#d9d9d9', cursor: 'not-allowed', display: 'inline-block', lineHeight: '1.4' }}>
+          Analytics <small style={{ fontSize: '10px', fontWeight: 'normal', display: 'block' }}>(Coming Soon)</small>
+        </span>
+      ),
+      title: 'Analytics (Coming Soon)',
+      disabled: true,
     },
     {
       key: '/blueprints',
       icon: <FileTextOutlined />,
-      label: <Link to="/blueprints">Export Blueprints</Link>,
+      label: (
+        <span style={{ color: '#d9d9d9', cursor: 'not-allowed', display: 'inline-block', lineHeight: '1.4' }}>
+          Export Blueprints <small style={{ fontSize: '10px', fontWeight: 'normal', display: 'block' }}>(Coming Soon)</small>
+        </span>
+      ),
+      title: 'Export Blueprints (Coming Soon)',
+      disabled: true,
     },
   ];
 

@@ -19,6 +19,7 @@ interface TopCommoditiesChartProps {
 }
 
 const TopCommoditiesChart: React.FC<TopCommoditiesChartProps> = ({ data }) => {
+  const BAR_COLOR = '#FFA000'; // Custom color for bar fill
   return (
     <div className="bg-white border border-gray-200/60 rounded-xl p-6 h-full flex flex-col">
       <div className="mb-6">
@@ -56,7 +57,7 @@ const TopCommoditiesChart: React.FC<TopCommoditiesChartProps> = ({ data }) => {
             />
             <Bar 
               dataKey="value" 
-              fill="hsl(var(--primary))"
+              fill={BAR_COLOR}
               radius={[2, 2, 0, 0]}
             />
           </BarChart>

@@ -10,7 +10,10 @@
     "lint:fix": "eslint src --ext ts,tsx --fix",
     "format": "prettier --write src/**/*.{ts,tsx,css,md}",
     "format:check": "prettier --check src/**/*.{ts,tsx,css,md}",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
@@ -50,6 +53,7 @@
     "@tanstack/react-query": "^5.76.1",
     "@types/react-icons": "^2.2.7",
     "@types/recharts": "^1.8.29",
+    "@xyflow/react": "^12.7.1",
     "antd": "^5.25.1",
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
@@ -84,6 +88,9 @@
   "devDependencies": {
     "@eslint/js": "^9.25.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/leaflet": "^1.9.17",
     "@types/react": "^19.1.2",
@@ -95,7 +102,9 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.2",
+    "jest-environment-jsdom": "^30.0.2",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.17",

@@ -11,7 +11,8 @@ import {
   FiAlertTriangle,
   FiFileText,
   FiTrendingUp,
-  FiLoader
+  FiLoader,
+  FiActivity
 } from 'react-icons/fi';
 import { MdAirplanemodeActive } from 'react-icons/md';
 import LegalProcessFlow from './LegalProcessFlow';
@@ -611,36 +612,35 @@ Use **forward contracts for currency hedging** to lock in favorable rates. Maint
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-[#00403D]/10 to-[#B3CFCD]/20 flex items-center justify-center border border-gray-200/50">
-              <span className="text-xl font-bold" style={{ color: getScoreColor(results.tradeEfficiencyScore) }}>
-                {results.tradeEfficiencyScore}
-              </span>
+          <div className="text-left">
+            <div className="w-12 h-12 mb-3 rounded-lg bg-gradient-to-br from-[#00403D]/10 to-[#B3CFCD]/20 flex items-center justify-center border border-gray-200/50">
+              <FiActivity className="w-5 h-5 text-[#00403D]" />
             </div>
-            <div className="text-xs text-gray-500 mb-1">Efficiency Score</div>
+            <div className="text-lg font-bold text-gray-900" style={{ color: getScoreColor(results.tradeEfficiencyScore) }}>
+              {results.tradeEfficiencyScore}
+            </div>
+            <div className="text-xs text-gray-500">Efficiency Score</div>
           </div>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="p-2 rounded-lg bg-[#00403D]/5">
-                <TransportIcon mode={transportMode} />
-              </div>
+          <div className="text-left">
+            <div className="w-12 h-12 mb-3 rounded-lg bg-[#00403D]/5 flex items-center justify-center border border-gray-200/50">
+              <TransportIcon mode={transportMode} />
             </div>
-            <div className="text-sm font-medium text-gray-900 capitalize">{transportMode} Freight</div>
+            <div className="text-lg font-bold text-gray-900 capitalize">{transportMode} Freight</div>
             <div className="text-xs text-gray-500">Transport Mode</div>
           </div>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-3">
-              <FiDollarSign className="w-4 h-4 text-[#00403D]" />
+          <div className="text-left">
+            <div className="w-12 h-12 mb-3 rounded-lg bg-[#00403D]/5 flex items-center justify-center border border-gray-200/50">
+              <FiDollarSign className="w-5 h-5 text-[#00403D]" />
             </div>
             <div className="text-lg font-bold text-gray-900">${results.costEstimate.toLocaleString()}</div>
             <div className="text-xs text-gray-500">Total Cost</div>
           </div>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-3">
-              <FiClock className="w-4 h-4 text-[#00403D]" />
+          <div className="text-left">
+            <div className="w-12 h-12 mb-3 rounded-lg bg-[#00403D]/5 flex items-center justify-center border border-gray-200/50">
+              <FiClock className="w-5 h-5 text-[#00403D]" />
             </div>
             <div className="text-lg font-bold text-gray-900">{results.timeEstimate} days</div>
             <div className="text-xs text-gray-500">Delivery Time</div>

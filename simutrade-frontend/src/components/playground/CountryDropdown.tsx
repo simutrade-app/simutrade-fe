@@ -104,8 +104,12 @@ const CountryDropdown: React.FC<CountryDropdownProps> = ({
             .toLowerCase()
             .includes(input.toLowerCase())
         }
-        dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-        dropdownMatchSelectWidth={false}
+        styles={{ 
+          popup: { 
+            root: { maxHeight: 400, overflow: 'auto' } 
+          } 
+        }}
+        popupMatchSelectWidth={false}
         className={
           type === 'origin' ? 'origin-dropdown' : 'destination-dropdown'
         }

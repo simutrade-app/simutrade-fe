@@ -26,7 +26,10 @@ import {
   FiStar,
   FiGift,
   FiList,
-  FiPlus
+  FiPlus,
+  FiChevronDown,
+  FiChevronUp,
+  FiLoader
 } from 'react-icons/fi';
 import { MdAirplanemodeActive } from 'react-icons/md';
 
@@ -58,6 +61,12 @@ const originCountries = [
 ];
 
 const destinationCountries: Country[] = [
+  { id: 'id', name: 'Indonesia', code: 'ID', flagUrl: 'https://flagcdn.com/w80/id.png' },
+  { id: 'my', name: 'Malaysia', code: 'MY', flagUrl: 'https://flagcdn.com/w80/my.png' },
+  { id: 'sg', name: 'Singapore', code: 'SG', flagUrl: 'https://flagcdn.com/w80/sg.png' },
+  { id: 'th', name: 'Thailand', code: 'TH', flagUrl: 'https://flagcdn.com/w80/th.png' },
+  { id: 'vn', name: 'Vietnam', code: 'VN', flagUrl: 'https://flagcdn.com/w80/vn.png' },
+  { id: 'ph', name: 'Philippines', code: 'PH', flagUrl: 'https://flagcdn.com/w80/ph.png' },
   { id: 'us', name: 'United States', code: 'US', flagUrl: 'https://flagcdn.com/w80/us.png' },
   { id: 'cn', name: 'China', code: 'CN', flagUrl: 'https://flagcdn.com/w80/cn.png' },
   { id: 'jp', name: 'Japan', code: 'JP', flagUrl: 'https://flagcdn.com/w80/jp.png' },
@@ -67,7 +76,6 @@ const destinationCountries: Country[] = [
   { id: 'fr', name: 'France', code: 'FR', flagUrl: 'https://flagcdn.com/w80/fr.png' },
   { id: 'ca', name: 'Canada', code: 'CA', flagUrl: 'https://flagcdn.com/w80/ca.png' },
   { id: 'au', name: 'Australia', code: 'AU', flagUrl: 'https://flagcdn.com/w80/au.png' },
-  { id: 'sg', name: 'Singapore', code: 'SG', flagUrl: 'https://flagcdn.com/w80/sg.png' },
 ];
 
 interface TransportModeInfo {
@@ -82,12 +90,22 @@ interface TransportModeInfo {
 }
 
 const transportModes: { [key: string]: TransportModeInfo } = {
+  multimodal: {
+    name: 'Multimodal (Auto)',
+    icon: <FiGlobe size={20} />,
+    timeMultiplier: 1.0,
+    costMultiplier: 1.0,
+    description: 'Optimal combination of transport modes',
+    color: 'rgb(236, 72, 153)',
+    bgColor: 'rgb(253, 244, 255)',
+    benefits: ['Best efficiency', 'Cost optimized', 'Realistic routing'],
+  },
   sea: {
     name: 'Sea Freight',
     icon: <FiAnchor size={20} />,
     timeMultiplier: 1.5,
     costMultiplier: 0.8,
-    description: 'Economical for bulk shipments',
+    description: 'Ocean routes only - bulk shipments',
     color: 'rgb(59, 130, 246)',
     bgColor: 'rgb(239, 246, 255)',
     benefits: ['Lowest cost', 'Eco-friendly', 'Large capacity'],
@@ -97,20 +115,20 @@ const transportModes: { [key: string]: TransportModeInfo } = {
     icon: <MdAirplanemodeActive size={20} />,
     timeMultiplier: 0.5,
     costMultiplier: 2.5,
-    description: 'Fastest delivery worldwide',
+    description: 'Direct flight paths - fastest delivery',
     color: 'rgb(147, 51, 234)',
     bgColor: 'rgb(250, 245, 255)',
-    benefits: ['Fastest delivery', 'High security', 'Global reach'],
+    benefits: ['Fastest delivery', 'Direct routes', 'Global reach'],
   },
   land: {
     name: 'Land Transport',
     icon: <FiTruck size={20} />,
     timeMultiplier: 1.0,
     costMultiplier: 1.2,
-    description: 'Reliable regional shipping',
+    description: 'Land routes only - regional shipping',
     color: 'rgb(34, 197, 94)',
     bgColor: 'rgb(240, 253, 244)',
-    benefits: ['Door-to-door', 'Flexible routes', 'Good for perishables'],
+    benefits: ['Door-to-door', 'Road/rail only', 'Regional coverage'],
   },
 };
 
@@ -131,6 +149,7 @@ interface SimulationPanelProps {
   simulationResults: Record<string, any> | null;
   onOriginCountryChange?: (originCountryId: string) => void;
   onCurrentLocationDetected?: (location: {lat: number, lng: number, name: string}) => void;
+  onDestinationSelect?: (destinationData: CountryData) => void;
   externalOriginCountry?: string;
 }
 
@@ -176,6 +195,183 @@ const CustomSelect: React.FC<{
   </Select.Root>
 );
 
+// EstimateElaboration Component
+interface EstimateElaborationProps {
+  cost: number;
+  time: number;
+  commodity: string;
+  transportMode: string;
+  volume: number;
+}
+
+const EstimateElaboration: React.FC<EstimateElaborationProps> = ({
+  cost, time, commodity, transportMode, volume
+}) => {
+  const [breakdown, setBreakdown] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    const fetchBreakdown = async () => {
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API call
+      
+      const breakdownData = {
+        costBreakdown: [
+          { label: 'Base freight', percentage: 65, amount: Math.round(cost * 0.65) },
+          { label: 'Fuel surcharge', percentage: 17.5, amount: Math.round(cost * 0.175) },
+          { label: 'Handling & terminal fees', percentage: 12.5, amount: Math.round(cost * 0.125) },
+          { label: 'Insurance & documentation', percentage: 7.5, amount: Math.round(cost * 0.075) }
+        ],
+        timeBreakdown: [
+          { label: 'Documentation preparation', days: '1-2' },
+          { label: 'Port/terminal processing', days: '1' },
+          { label: `${transportMode === 'sea' ? 'Ocean transit' : transportMode === 'air' ? 'Air transit' : 'Land transport'}`, days: Math.max(1, time - 4).toString() },
+          { label: 'Destination customs clearance', days: '1-2' }
+        ],
+        factors: [
+          transportMode === 'sea' ? 'Port congestion affects scheduling' : transportMode === 'air' ? 'Flight availability varies by season' : 'Border crossings may cause delays',
+          `${commodity} ${['Electronics', 'Pharmaceuticals'].includes(commodity) ? 'requires special handling' : 'uses standard packaging'}`,
+          'Fuel prices impact surcharges (±20%)',
+          volume > 500 ? 'Large volume qualifies for bulk rates' : 'Standard volume pricing'
+        ]
+      };
+      
+      setBreakdown(breakdownData);
+      setLoading(false);
+    };
+
+    fetchBreakdown();
+  }, [cost, time, commodity, transportMode, volume]);
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '32px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        border: '1px solid #e5e7eb'
+      }}>
+        <FiLoader style={{ marginRight: '8px', animation: 'spin 1s linear infinite', color: '#00403D' }} />
+        <span style={{ color: '#6b7280', fontSize: '14px' }}>Analyzing breakdown...</span>
+      </div>
+    );
+  }
+
+  if (!breakdown) return null;
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      {/* Cost Breakdown Card */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        border: '1px solid #e5e7eb',
+        padding: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+          <FiDollarSign style={{ color: '#00403D', marginRight: '8px' }} />
+          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+            Cost Breakdown
+          </h4>
+        </div>
+        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>
+          Total: ${cost.toLocaleString()}
+        </div>
+        <div>
+          {breakdown.costBreakdown.map((item: any, index: number) => (
+            <div key={index} style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '12px',
+              paddingBottom: '8px',
+              borderBottom: index < breakdown.costBreakdown.length - 1 ? '1px solid #f3f4f6' : 'none'
+            }}>
+              <span style={{ fontSize: '13px', color: '#374151' }}>{item.label}</span>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '13px', fontWeight: '600', color: '#1f2937' }}>
+                  ${item.amount.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                  {item.percentage}%
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Time Breakdown Card */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        border: '1px solid #e5e7eb',
+        padding: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+          <FiClock style={{ color: '#00403D', marginRight: '8px' }} />
+          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+            Time Breakdown
+          </h4>
+        </div>
+        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>
+          Total: {time} days
+        </div>
+        <div>
+          {breakdown.timeBreakdown.map((item: any, index: number) => (
+            <div key={index} style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '12px',
+              paddingBottom: '8px',
+              borderBottom: index < breakdown.timeBreakdown.length - 1 ? '1px solid #f3f4f6' : 'none'
+            }}>
+              <span style={{ fontSize: '13px', color: '#374151' }}>{item.label}</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1f2937' }}>
+                {item.days} {item.days === '1' ? 'day' : 'days'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Key Factors Card - Full Width */}
+      <div style={{
+        gridColumn: '1 / -1',
+        backgroundColor: '#f8fafc',
+        borderRadius: '12px',
+        border: '1px solid #e2e8f0',
+        padding: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+          <FiLoader style={{ color: '#00403D', marginRight: '8px' }} />
+          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+            Key Factors
+          </h4>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          {breakdown.factors.map((factor: string, index: number) => (
+            <div key={index} style={{
+              fontSize: '13px',
+              color: '#475569',
+              padding: '8px 12px',
+              backgroundColor: 'white',
+              borderRadius: '6px',
+              border: '1px solid #e2e8f0'
+            }}>
+              • {factor}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SimulationPanel: React.FC<SimulationPanelProps> = ({
   selectedCountry,
   onRunSimulation,
@@ -184,12 +380,13 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
   simulationResults,
   onOriginCountryChange,
   onCurrentLocationDetected,
+  onDestinationSelect,
   externalOriginCountry,
 }) => {
   const [formData, setFormData] = useState<FormDataType>({
     commodity: null,
     volume: 100,
-    transportMode: 'sea',
+    transportMode: 'multimodal',
     originCountry: '',
     destinationMode: 'map',
     destinationCountry: null,
@@ -359,11 +556,21 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
     const selectedDestination = destinationCountries.find(c => c.id === countryId);
     if (selectedDestination) {
       const countryCoordinates: { [key: string]: { lat: number; lng: number } } = {
-        us: { lat: 38.8951, lng: -77.0364 }, cn: { lat: 39.9042, lng: 116.4074 },
-        jp: { lat: 35.6762, lng: 139.6503 }, kr: { lat: 37.5665, lng: 126.978 },
-        de: { lat: 52.52, lng: 13.405 }, gb: { lat: 51.5074, lng: -0.1278 },
-        fr: { lat: 48.8566, lng: 2.3522 }, ca: { lat: 45.4215, lng: -75.6972 },
-        au: { lat: -35.2809, lng: 149.13 }, sg: { lat: 1.3521, lng: 103.8198 },
+        id: { lat: -6.2088, lng: 106.8456 }, // Jakarta, Indonesia
+        my: { lat: 3.139, lng: 101.6869 }, // Kuala Lumpur, Malaysia
+        sg: { lat: 1.3521, lng: 103.8198 }, // Singapore
+        th: { lat: 13.7563, lng: 100.5018 }, // Bangkok, Thailand
+        vn: { lat: 21.0285, lng: 105.8542 }, // Hanoi, Vietnam
+        ph: { lat: 14.5995, lng: 120.9842 }, // Manila, Philippines
+        us: { lat: 38.8951, lng: -77.0364 }, // Washington DC, US
+        cn: { lat: 39.9042, lng: 116.4074 }, // Beijing, China
+        jp: { lat: 35.6762, lng: 139.6503 }, // Tokyo, Japan
+        kr: { lat: 37.5665, lng: 126.978 }, // Seoul, South Korea
+        de: { lat: 52.52, lng: 13.405 }, // Berlin, Germany
+        gb: { lat: 51.5074, lng: -0.1278 }, // London, UK
+        fr: { lat: 48.8566, lng: 2.3522 }, // Paris, France
+        ca: { lat: 45.4215, lng: -75.6972 }, // Ottawa, Canada
+        au: { lat: -35.2809, lng: 149.13 }, // Canberra, Australia
       };
 
       const coordinates = countryCoordinates[countryId] || { lat: 0, lng: 0 };
@@ -375,6 +582,18 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
         destinationLat: coordinates.lat,
         destinationLng: coordinates.lng,
       }));
+
+      // Update map with selected destination
+      if (onDestinationSelect) {
+        onDestinationSelect({
+          name: selectedDestination.name,
+          lat: coordinates.lat,
+          lng: coordinates.lng,
+          iso: selectedDestination.code,
+          code: selectedDestination.code,
+          id: selectedDestination.id
+        });
+      }
     }
   };
 
@@ -1256,34 +1475,49 @@ const SimulationPanel: React.FC<SimulationPanelProps> = ({
 
       {/* Live Estimates */}
       {isFormComplete() && (
-        <div className="estimates-section">
-          <div className="estimate-card cost-estimate">
-            <div className="estimate-icon">
-              <FiDollarSign size={20} />
-            </div>
-            <p className="estimate-label">Total Cost</p>
-            {estimates.cost > 0 ? (
-              <h3 className="estimate-value">${estimates.cost.toLocaleString()}</h3>
-            ) : (
-              <div className="skeleton-estimate">
-                <div className="skeleton-bar large"></div>
+        <>
+          <div className="estimates-section">
+            <div className="estimate-card cost-estimate">
+              <div className="estimate-icon">
+                <FiDollarSign size={20} />
               </div>
-            )}
-          </div>
-          <div className="estimate-card time-estimate">
-            <div className="estimate-icon">
-              <FiClock size={20} />
+              <p className="estimate-label">Total Cost</p>
+              {estimates.cost > 0 ? (
+                <h3 className="estimate-value">${estimates.cost.toLocaleString()}</h3>
+              ) : (
+                <div className="skeleton-estimate">
+                  <div className="skeleton-bar large"></div>
+                </div>
+              )}
             </div>
-            <p className="estimate-label">Delivery Time</p>
-            {estimates.time > 0 ? (
-              <h3 className="estimate-value">{estimates.time} days</h3>
-            ) : (
-              <div className="skeleton-estimate">
-                <div className="skeleton-bar large"></div>
+            <div className="estimate-card time-estimate">
+              <div className="estimate-icon">
+                <FiClock size={20} />
               </div>
-            )}
+              <p className="estimate-label">Delivery Time</p>
+              {estimates.time > 0 ? (
+                <h3 className="estimate-value">{estimates.time} days</h3>
+              ) : (
+                <div className="skeleton-estimate">
+                  <div className="skeleton-bar large"></div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+          
+          {/* Cost & Time Breakdown Elaboration */}
+          {estimates.cost > 0 && estimates.time > 0 && (
+            <div style={{ marginTop: '24px', marginBottom: '32px' }}>
+              <EstimateElaboration 
+                cost={estimates.cost}
+                time={estimates.time}
+                commodity={commodities.find(c => c.id === formData.commodity)?.name || 'Unknown'}
+                transportMode={formData.transportMode}
+                volume={formData.volume}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Advanced Settings */}

@@ -353,7 +353,7 @@ const RouteAnimation = ({
   routePoints,
   transportMode,
 }: {
-  routePoints: L.LatLngLiteral[];
+  routePoints: Array<{lat: number; lng: number; name?: string; transportMode?: string; error?: string; message?: string}>;
   transportMode: string;
 }) => {
   const map = useMap();
@@ -361,44 +361,354 @@ const RouteAnimation = ({
   useEffect(() => {
     if (!routePoints || routePoints.length < 2) return;
 
-    // Different styles for different transport modes
-    const getRouteStyle = () => {
-      switch (transportMode) {
-        case 'air':
-          return {
-            color: '#1890ff', // Blue for air
-            weight: 3,
-            opacity: 0.7,
-            dashArray: '5, 10',
-          };
-        case 'sea':
-          return {
-            color: '#4CAF50', // Green for sea
-            weight: 3,
-            opacity: 0.8,
-            dashArray: '10, 10',
-          };
-        case 'land':
-          return {
-            color: '#FF9800', // Orange for land
-            weight: 4,
-            opacity: 0.8,
-            dashArray: undefined,
-          };
-        default:
-          return {
-            color: '#4CAF50',
-            weight: 3,
-            opacity: 0.8,
-            dashArray: '10, 10',
-          };
+    // Check if route contains error points (like LAND_IMPOSSIBLE)
+    const hasErrorPoint = routePoints.some(point => point.error === 'LAND_IMPOSSIBLE');
+    
+    if (hasErrorPoint) {
+      // Display error route with red X markers instead of animation
+      const errorPoint = routePoints.find(point => point.error === 'LAND_IMPOSSIBLE');
+      
+      if (errorPoint) {
+        // Create error marker with message
+        const errorIcon = L.divIcon({
+          className: '',
+          html: '<div style="font-size:32px; color: #ff4444; background: none; border: none; outline: none; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">❌</div>',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+        
+        const errorMarker = L.marker([errorPoint.lat, errorPoint.lng], { 
+          icon: errorIcon 
+        }).addTo(map);
+        
+        errorMarker.bindPopup(
+          `<div style="text-align: center; padding: 10px;">
+            <strong style="color: #ff4444;">❌ Route Impossible</strong><br/>
+            <span style="font-size: 12px;">${errorPoint.message || 'Land transport cannot cross ocean barriers.'}</span>
+          </div>`,
+          { closeButton: true, autoClose: false }
+        ).openPopup();
+
+        // Draw dashed red line to show impossible route
+        const errorPolyline = L.polyline(routePoints, {
+          color: '#ff4444',
+          weight: 3,
+          opacity: 0.7,
+          dashArray: '10, 10'
+        }).addTo(map);
+
+        // Cleanup function
+        return () => {
+          map.removeLayer(errorMarker);
+          map.removeLayer(errorPolyline);
+        };
       }
-    };
+      return;
+    }
 
-    // Create route polyline with appropriate style
-    const polyline = L.polyline(routePoints, getRouteStyle()).addTo(map);
+    const layers: L.Layer[] = [];
 
-    // Add markers for start and end points
+    if (transportMode === 'multimodal') {
+      // Enhanced multimodal route with sequential animation
+      const segmentLayers: L.Layer[] = [];
+      let animatedMarker: L.Marker | null = null;
+      let currentSegmentIndex = 0;
+      let animationInterval: NodeJS.Timeout | null = null;
+      
+      // Create all route segments with different styles
+      for (let i = 0; i < routePoints.length - 1; i++) {
+        const currentPoint = routePoints[i];
+        const nextPoint = routePoints[i + 1];
+        const segmentMode = nextPoint.transportMode || currentPoint.transportMode || 'land';
+        
+        // Create segment polyline with appropriate style
+        const segmentStyle = (() => {
+          switch (segmentMode) {
+            case 'air':
+              return { color: '#1890ff', weight: 3, opacity: 0.6, dashArray: '5, 10' };
+            case 'sea':
+              return { color: '#4CAF50', weight: 3, opacity: 0.6, dashArray: '10, 10' };
+            case 'land':
+              return { color: '#FF9800', weight: 4, opacity: 0.6, dashArray: undefined };
+            default:
+              return { color: '#666', weight: 3, opacity: 0.6 };
+          }
+        })();
+
+        const segmentPolyline = L.polyline([currentPoint, nextPoint], segmentStyle).addTo(map);
+        segmentLayers.push(segmentPolyline);
+      }
+      
+      // Create initial animated marker
+      const createMarkerIcon = (mode: string, isActive: boolean = false) => {
+        const opacity = isActive ? '1.0' : '0.7';
+        const size = isActive ? '32' : '24';
+        const shadow = isActive ? '3px 3px 6px rgba(0,0,0,0.4)' : '1px 1px 3px rgba(0,0,0,0.3)';
+        
+        switch (mode) {
+          case 'air':
+            return L.divIcon({
+              className: '',
+              html: `<div style="font-size:${size}px; opacity:${opacity}; text-shadow: ${shadow}; background: none; border: none; outline: none;">✈️</div>`,
+              iconSize: [parseInt(size), parseInt(size)],
+              iconAnchor: [parseInt(size)/2, parseInt(size)/2],
+            });
+          case 'sea':
+            return L.divIcon({
+              className: '',
+              html: `<div style="font-size:${size}px; opacity:${opacity}; text-shadow: ${shadow}; background: none; border: none; outline: none;">🚢</div>`,
+              iconSize: [parseInt(size), parseInt(size)],
+              iconAnchor: [parseInt(size)/2, parseInt(size)/2],
+            });
+          case 'land':
+            return L.divIcon({
+              className: '',
+              html: `<div style="font-size:${size}px; opacity:${opacity}; text-shadow: ${shadow}; background: none; border: none; outline: none;">🚚</div>`,
+              iconSize: [parseInt(size), parseInt(size)],
+              iconAnchor: [parseInt(size)/2, parseInt(size)/2],
+            });
+          default:
+            return L.divIcon({
+              className: '',
+              html: `<div style="font-size:${size}px; opacity:${opacity}; text-shadow: ${shadow}; background: none; border: none; outline: none;">🚚</div>`,
+              iconSize: [parseInt(size), parseInt(size)],
+              iconAnchor: [parseInt(size)/2, parseInt(size)/2],
+            });
+        }
+      };
+      
+      // Start with first segment
+      const initialMode = routePoints[1]?.transportMode || routePoints[0]?.transportMode || 'land';
+      animatedMarker = L.marker(routePoints[0], { 
+        icon: createMarkerIcon(initialMode, true)
+      }).addTo(map);
+      
+      // Animation function for multimodal route
+      let step = 0;
+      const stepsPerSegment = 20; // Reduced from 50 for faster transitions
+      
+      const animateMultimodal = () => {
+        if (currentSegmentIndex >= routePoints.length - 1) {
+          // Animation complete - restart from beginning
+          currentSegmentIndex = 0;
+          step = 0;
+        }
+        
+        const currentPoint = routePoints[currentSegmentIndex];
+        const nextPoint = routePoints[currentSegmentIndex + 1];
+        const segmentMode = nextPoint?.transportMode || currentPoint?.transportMode || 'land';
+        
+        if (step === 0) {
+          // Instant icon change - no delay
+          if (animatedMarker) {
+            animatedMarker.setIcon(createMarkerIcon(segmentMode, true));
+          }
+          
+          // Highlight current segment instantly
+          segmentLayers.forEach((layer, index) => {
+            if (layer instanceof L.Polyline) {
+              const isCurrentSegment = index === currentSegmentIndex;
+              const segmentStyle = isCurrentSegment 
+                ? { opacity: 1.0, weight: 5 } 
+                : { opacity: 0.4, weight: 3 };
+              layer.setStyle(segmentStyle);
+            }
+          });
+
+          // Update interval speed for current transport mode (dynamic speed)
+          if (animationInterval) {
+            clearInterval(animationInterval);
+            const currentSpeed = getAnimationSpeed(segmentMode);
+            animationInterval = setInterval(animateMultimodal, currentSpeed);
+          }
+        }
+        
+        // Calculate position within current segment
+        const progress = step / stepsPerSegment;
+        const lat = currentPoint.lat + (nextPoint.lat - currentPoint.lat) * progress;
+        const lng = currentPoint.lng + (nextPoint.lng - currentPoint.lng) * progress;
+        
+        if (animatedMarker) {
+          animatedMarker.setLatLng([lat, lng]);
+        }
+        
+        step++;
+        
+        if (step >= stepsPerSegment) {
+          // Move to next segment immediately
+          currentSegmentIndex++;
+          step = 0;
+        }
+      };
+      
+      // Faster animation speeds for smooth transitions
+      const getAnimationSpeed = (mode: string) => {
+        switch (mode) {
+          case 'air': return 30;   // Faster: was 50ms
+          case 'sea': return 50;   // Faster: was 120ms  
+          case 'land': return 40;  // Faster: was 80ms
+          default: return 40;
+        }
+      };
+      
+      animationInterval = setInterval(animateMultimodal, getAnimationSpeed(initialMode));
+      
+      // Store references for cleanup
+      layers.push(...segmentLayers);
+      if (animatedMarker) layers.push(animatedMarker);
+      
+      // Store interval for cleanup
+      if (animatedMarker && animationInterval) {
+        (animatedMarker as any)._animationInterval = animationInterval;
+      }
+    } else {
+      // For single transport modes, apply intelligent routing constraints
+      let adjustedRoutePoints = [...routePoints];
+      
+      if (transportMode === 'sea') {
+        // Sea freight should stop at coastal points and switch to land
+        adjustedRoutePoints = [];
+        for (let i = 0; i < routePoints.length; i++) {
+          const point = routePoints[i];
+          
+          // Check if this is a landlocked area that sea freight cannot reach
+          const isLandlocked = (lat: number, lng: number) => {
+            // Simple landlocked detection - enhance as needed
+            // Central Asia, landlocked countries
+            if (lat > 35 && lat < 55 && lng > 40 && lng < 80) return true;
+            // Central Africa
+            if (lat > -10 && lat < 20 && lng > 10 && lng < 40) return true;
+            return false;
+          };
+          
+          if (isLandlocked(point.lat, point.lng)) {
+            // Find nearest coastal point for sea routes
+            const nearestCoast = findNearestCoastalPoint(point);
+            adjustedRoutePoints.push(nearestCoast);
+            break; // Stop sea route here
+          } else {
+            adjustedRoutePoints.push(point);
+          }
+        }
+      }
+
+      // Create single-mode route
+      const routeStyle = (() => {
+        switch (transportMode) {
+          case 'air':
+            return { color: '#1890ff', weight: 3, opacity: 0.7, dashArray: '5, 10' };
+          case 'sea':
+            return { color: '#4CAF50', weight: 3, opacity: 0.8, dashArray: '10, 10' };
+          case 'land':
+            return { color: '#FF9800', weight: 4, opacity: 0.8, dashArray: undefined };
+          default:
+            return { color: '#4CAF50', weight: 3, opacity: 0.8, dashArray: '10, 10' };
+        }
+      })();
+
+      const polyline = L.polyline(adjustedRoutePoints, routeStyle).addTo(map);
+      layers.push(polyline);
+
+      // Single animated icon for the route
+      const transportIcon = (() => {
+        switch (transportMode) {
+          case 'air':
+            return L.divIcon({
+              className: '',
+              html: '<div style="font-size:28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); background: none; border: none; outline: none;">✈️</div>',
+              iconSize: [28, 28],
+              iconAnchor: [14, 14],
+            });
+          case 'land':
+            return L.divIcon({
+              className: '',
+              html: '<div style="font-size:28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); background: none; border: none; outline: none;">🚚</div>',
+              iconSize: [28, 28],
+              iconAnchor: [14, 14],
+            });
+          case 'sea':
+            return L.divIcon({
+              className: '',
+              html: '<div style="font-size:28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); background: none; border: none; outline: none;">🚢</div>',
+              iconSize: [28, 28],
+              iconAnchor: [14, 14],
+            });
+          default:
+            return L.divIcon({
+              className: '',
+              html: '<div style="font-size:28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); background: none; border: none; outline: none;">🚢</div>',
+              iconSize: [28, 28],
+              iconAnchor: [14, 14],
+            });
+        }
+      })();
+
+      const animatedMarker = L.marker(adjustedRoutePoints[0], { icon: transportIcon }).addTo(map);
+      layers.push(animatedMarker);
+
+      // Animation for single transport mode
+      let step = 0;
+      const totalSteps = 80; // Reduced from 100 for faster completion
+      const getAnimationSpeed = () => {
+        switch (transportMode) {
+          case 'air': return 30;   // Consistent with multimodal
+          case 'sea': return 50;   // Consistent with multimodal
+          case 'land': return 40;  // Consistent with multimodal
+          default: return 40;
+        }
+      };
+
+      const interval = setInterval(() => {
+        if (step >= totalSteps) step = 0;
+
+        const progress = step / totalSteps;
+        const routeIndex = Math.floor(progress * (adjustedRoutePoints.length - 1));
+        const nextRouteIndex = Math.min(routeIndex + 1, adjustedRoutePoints.length - 1);
+        const subProgress = (progress * (adjustedRoutePoints.length - 1)) % 1;
+
+        const currentPos = adjustedRoutePoints[routeIndex];
+        const nextPos = adjustedRoutePoints[nextRouteIndex];
+
+        const lat = currentPos.lat + (nextPos.lat - currentPos.lat) * subProgress;
+        const lng = currentPos.lng + (nextPos.lng - currentPos.lng) * subProgress;
+
+        animatedMarker.setLatLng([lat, lng]);
+        step++;
+      }, getAnimationSpeed());
+
+      // Store interval for cleanup
+      (animatedMarker as any)._animationInterval = interval;
+    }
+
+    // Helper function to find nearest coastal point
+    function findNearestCoastalPoint(point: {lat: number; lng: number}) {
+      // Simplified coastal points - can be enhanced with real coastal data
+      const coastalPoints = [
+        { lat: 1.3521, lng: 103.8198, name: 'Singapore' },
+        { lat: 22.3193, lng: 114.1694, name: 'Hong Kong' },
+        { lat: 25.2048, lng: 55.2708, name: 'Dubai' },
+        { lat: 51.9579, lng: 4.1178, name: 'Rotterdam' },
+        { lat: 33.7701, lng: -118.1937, name: 'Los Angeles' },
+      ];
+      
+      let nearest = coastalPoints[0];
+      let minDistance = Number.MAX_VALUE;
+      
+      coastalPoints.forEach(coast => {
+        const distance = Math.sqrt(
+          Math.pow(coast.lat - point.lat, 2) + 
+          Math.pow(coast.lng - point.lng, 2)
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = coast;
+        }
+      });
+      
+      return nearest;
+    }
+
+    // Add start/end markers
     const startIcon = L.divIcon({
       className: 'custom-div-icon',
       html: '<div style="background-color:#1890ff;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 10px rgba(0,0,0,0.2);"></div>',
@@ -411,89 +721,22 @@ const RouteAnimation = ({
       iconSize: [20, 20],
     });
 
-    const startMarker = L.marker(routePoints[0], { icon: startIcon }).addTo(
-      map
-    );
-    const endMarker = L.marker(routePoints[routePoints.length - 1], {
-      icon: endIcon,
-    }).addTo(map);
+    const startMarker = L.marker(routePoints[0], { icon: startIcon }).addTo(map);
+    const endMarker = L.marker(routePoints[routePoints.length - 1], { icon: endIcon }).addTo(map);
+    layers.push(startMarker, endMarker);
 
-    // Add animated marker based on transport mode
-    let markerIcon;
-    if (transportMode === 'air') {
-      markerIcon = L.divIcon({
-        className: 'airplane-icon',
-        html: '<div style="font-size:28px">✈️</div>',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-    } else if (transportMode === 'land') {
-      markerIcon = L.divIcon({
-        className: 'truck-icon',
-        html: '<div style="font-size:28px">🚚</div>',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-    } else {
-      markerIcon = L.divIcon({
-        className: 'ship-icon',
-        html: '<div style="font-size:28px">🚢</div>',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-    }
-
-    const animatedMarker = L.marker(routePoints[0], { icon: markerIcon }).addTo(
-      map
-    );
-
-    // Animation speed based on transport mode
-    const getAnimationSpeed = () => {
-      switch (transportMode) {
-        case 'air':
-          return 60; // Faster for air
-        case 'sea':
-          return 100; // Normal for sea
-        case 'land':
-          return 80; // Medium for land
-        default:
-          return 100;
-      }
-    };
-
-    // Simple animation using setInterval
-    let step = 0;
-    const totalSteps = 100;
-    const interval = setInterval(() => {
-      if (step >= totalSteps) {
-        step = 0; // Reset the animation
-      }
-
-      const progress = step / totalSteps;
-      const routeIndex = Math.floor(progress * (routePoints.length - 1));
-      const nextRouteIndex = Math.min(routeIndex + 1, routePoints.length - 1);
-      const subProgress = (progress * (routePoints.length - 1)) % 1;
-
-      const currentPos = routePoints[routeIndex];
-      const nextPos = routePoints[nextRouteIndex];
-
-      const lat = currentPos.lat + (nextPos.lat - currentPos.lat) * subProgress;
-      const lng = currentPos.lng + (nextPos.lng - currentPos.lng) * subProgress;
-
-      animatedMarker.setLatLng([lat, lng]);
-
-      step++;
-    }, getAnimationSpeed());
-
-    // Fit bounds to show the entire route with better padding
-    map.fitBounds(polyline.getBounds(), { padding: [80, 80] });
+    // Fit bounds to show the entire route
+    const allPoints = routePoints.map(p => [p.lat, p.lng]) as L.LatLngTuple[];
+    map.fitBounds(allPoints, { padding: [80, 80] });
 
     return () => {
-      clearInterval(interval);
-      map.removeLayer(polyline);
-      map.removeLayer(startMarker);
-      map.removeLayer(endMarker);
-      map.removeLayer(animatedMarker);
+      // Cleanup all layers and intervals
+      layers.forEach(layer => {
+        if ((layer as any)._animationInterval) {
+          clearInterval((layer as any)._animationInterval);
+        }
+        map.removeLayer(layer);
+      });
     };
   }, [routePoints, map, transportMode]);
 
@@ -612,18 +855,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
   };
 
   const onEachFeature = (feature: GeoJSON.Feature, layer: L.Layer) => {
-    // Conditional logging for problematic features
-    if (
-      feature &&
-      feature.properties &&
-      feature.properties.ADMIN === undefined &&
-      feature.properties.ISO_A3 === undefined
-    ) {
-      console.log(
-        '[Debug Problematic Feature Props]:',
-        JSON.parse(JSON.stringify(feature.properties))
-      );
-    }
+    // Removed debug logging to prevent console spam
 
     const countryName =
       feature.properties?.name || // Correct property name from GeoJSON
@@ -655,27 +887,7 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
       // The initial log of feature.properties should cover the debugging need here.
     }
 
-    // Conditional detailed log for problematic features
-    if (
-      feature &&
-      feature.properties &&
-      feature.properties.ADMIN === undefined &&
-      feature.properties.ISO_A3 === undefined
-    ) {
-      console.log('[Debug Name Decision for Problematic Feature]:', {
-        rawAdmin: feature.properties?.ADMIN,
-        rawName: feature.properties?.NAME,
-        rawSovereignt: feature.properties?.SOVEREIGNT,
-        rawNameEn: feature.properties?.['name:en'],
-        rawIntName: feature.properties?.int_name,
-        rawOfficialName: feature.properties?.official_name,
-        rawOfficialNameEn: feature.properties?.['official_name:en'],
-        derivedCountryName: countryName,
-        countryCodeA3: countryCode,
-        countryCodeA2: countryCodeA2,
-        finalDisplayName: displayName,
-      });
-    }
+    // Removed detailed debug logging to prevent console spam
 
     // Remove any residual popup binding first to avoid duplicates
     (layer as L.Path).unbindPopup?.();
@@ -708,26 +920,18 @@ const InteractiveTradeMap: React.FC<InteractiveTradeMapProps> = ({
         target.closeTooltip();
       },
       click: (e: L.LeafletMouseEvent) => {
-        // Skip click handler for Indonesia (origin country) but still allow tooltip
-        if (countryCode !== 'IDN') {
-          onCountrySelect({
-            name: displayName,
-            iso: countryCode || 'N/A',
-            lat: e.latlng.lat,
-            lng: e.latlng.lng,
-          });
-        }
+        // Allow clicking on all countries including Indonesia
+        onCountrySelect({
+          name: displayName,
+          iso: countryCode || 'N/A',
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+        });
       }
     });
   };
 
-  // Log component state before rendering
-  console.log(
-    '[Debug Map] Rendering. Loading:',
-    loading,
-    'GeoJSON Data:',
-    countriesGeoJSON ? 'Data Loaded' : 'No Data'
-  );
+  // Removed debug logging to reduce console noise
 
   if (loading) {
     return (

@@ -150,6 +150,7 @@ const transportModes = {
   sea: { name: 'Sea Freight', icon: '🚢' },
   air: { name: 'Air Freight', icon: '✈️' },
   land: { name: 'Land Transport', icon: '🚚' },
+  multimodal: { name: 'Multimodal Transport', icon: '🌐' },
 };
 
 const originCountries = [

@@ -1,9 +1,27 @@
-# Abaikan semua file dan folder di root
-*
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Izinkan folder simutrade-frontend dan isinya
-!simutrade-frontend/
-!simutrade-frontend/**
+node_modules
+dist
+dist-ssr
+*.local
 
-# Pastikan .gitignore sendiri tidak diabaikan
-!.gitignore
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+/screenshots/
+

@@ -10,6 +10,7 @@
   <p align="center">
     <a href="https://simutrade.app">🌐 Live Demo</a> •
     <a href="https://api.simutrade.app">🔗 API</a> •
+    <a href="https://status.simutrade.app">📊 Status</a> •
     <a href="#-competition-achievement">🏆 Achievement</a> •
     <a href="#-repositories">📁 Repositories</a> •
     <a href="#-tech-stacks">🛠️ Tech Stack</a>
@@ -210,9 +211,20 @@ SimuTrade is built as a modular, microservices-based architecture with three mai
 ### 🌐 Production Deployment
 
 The application is automatically deployed to [simutrade.app](https://simutrade.app) using modern CI/CD pipelines with:
-- **Frontend**: Vercel/Netlify deployment
+- **Frontend**: Cloudflare Pages deployment
 - **API Backend**: [api.simutrade.app](https://api.simutrade.app)
 - **AI Services**: Integrated with the main platform
+
+### 📊 System Status
+
+Monitor the real-time status of all SimuTrade services:
+- **Status Page**: [status.simutrade.app](https://status.simutrade.app/)
+- **Services Monitored**:
+  - 🌐 SimuTrade Web (simutrade.app)
+  - 🔗 SimuTrade API (api.simutrade.app)
+  - 🤖 SimuTrade AI
+  - 🗄️ SimuTrade MongoDB
+  - 📡 SimuTrade CDN (cdn.simutrade.app)
 
 ## 🤝 Contributing
 

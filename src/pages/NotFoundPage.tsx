@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import DomainChangeNotice from '@/components/landing/DomainChangeNotice';
 // import '../styles/error-and-loading.css'; // Pastikan path ini benar atau styling diimpor secara global
 
 const NotFoundPage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
+      <DomainChangeNotice />
       <h1 className="text-9xl font-extrabold text-primary">404</h1>
       <h2 className="mt-4 text-4xl font-semibold text-foreground">
         Oops! Page Not Found.

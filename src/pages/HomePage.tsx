@@ -7,10 +7,12 @@ import SolutionsSection from '@/components/landing/SolutionsSection';
 import PricingSection from '@/components/landing/PricingSection';
 import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FaqSection from '@/components/landing/FaqSection';
+import DomainChangeNotice from '@/components/landing/DomainChangeNotice';
 
 const HomePage: React.FC = () => {
   return (
     <div className="home-page">
+      <DomainChangeNotice />
       <HeroSection />
       <AdvantagesSection />
       <HowItWorksSection />

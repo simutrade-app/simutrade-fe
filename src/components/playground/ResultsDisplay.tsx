@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+
+const API_HOST: string = import.meta.env.VITE_API_HOST;
 import * as Tabs from '@radix-ui/react-tabs';
 import * as Separator from '@radix-ui/react-separator';
 import { 
@@ -414,7 +416,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
       
       // Try both relative and absolute paths
       const endpoints = [
-        'https://api.simutrade.app/service/ai-agent/vertex',
+        `${API_HOST}/service/ai-agent/vertex`,
         '/service/ai-agent/vertex',
         '/api/ai-agent/vertex',
         'http://localhost:3001/service/ai-agent/vertex',

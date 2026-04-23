@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// Configuration
-const API_URL = 'https://api.simutrade.app';
+const API_HOST: string = import.meta.env.VITE_API_HOST;
 export const AUTH_TOKEN_KEY = 'simutrade_token';
 export const USER_DATA_KEY = 'simutrade_user';
 export const REMEMBER_ME_KEY = 'simutrade_remember';
@@ -36,7 +35,7 @@ const apiRequest = async (
   data: Record<string, unknown> | null = null
 ) => {
   try {
-    const url = `${API_URL}${endpoint}`;
+    const url = `${API_HOST}${endpoint}`;
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
 
     const headers: Record<string, string> = {
@@ -217,7 +216,7 @@ export const registerUser = async (email: string, password: string) => {
   } else {
     // Real API implementation with direct axios.post
     try {
-      const url = `${API_URL}/user/auth/email/register`;
+      const url = `${API_HOST}/user/auth/email/register`;
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -308,7 +307,7 @@ export const loginUser = async (
   } else {
     // Real API implementation
     try {
-      const url = `${API_URL}/user/auth/email/login`;
+      const url = `${API_HOST}/user/auth/email/login`;
       const headers = { 'Content-Type': 'application/json' };
       const requestBody = { email, password };
       const response = await axios.post(url, requestBody, {

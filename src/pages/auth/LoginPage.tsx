@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+const API_HOST: string = import.meta.env.VITE_API_HOST;
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -283,7 +285,7 @@ const LoginPage: React.FC = () => {
 
             <div className="mt-6">
               <a
-                href="https://api.simutrade.app/user/auth/google"
+                href={`${API_HOST}/user/auth/google`}
                 className="block w-full"
               >
                 <Button

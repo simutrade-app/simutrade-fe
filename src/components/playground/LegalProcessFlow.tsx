@@ -15,6 +15,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+const API_HOST: string = import.meta.env.VITE_API_HOST;
+
 import { 
   FiFileText, 
   FiShield, 
@@ -71,7 +73,7 @@ const NodeDetailModal: React.FC<NodeDetailModalProps> = ({
 
       const query = `Provide detailed information about "${nodeData.label}" in the legal process for international trade of ${commodity || 'goods'} from ${originCountry || 'origin country'} to ${destinationCountry || 'destination country'}. Include required documents, timeline, potential challenges, regulatory requirements, and step-by-step procedures. Be specific and actionable.`;
 
-      const response = await fetch('https://api.simutrade.app/service/ai-agent/vertex', {
+      const response = await fetch(`${API_HOST}/service/ai-agent/vertex`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

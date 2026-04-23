@@ -1,15 +1,13 @@
 import axios from 'axios';
 import { AUTH_TOKEN_KEY } from './AuthService';
 
-// Configuration
-// Use proxy URL in development environment
-const API_URL = 'https://api.simutrade.app';
+const API_HOST: string = import.meta.env.VITE_API_HOST;
 
 // Helper function to handle token refresh
 const refreshToken = async () => {
   try {
     const response = await axios.post(
-      `${API_URL}/user/auth/refresh-token`,
+      `${API_HOST}/user/auth/refresh-token`,
       {},
       {
         withCredentials: true,
@@ -41,7 +39,7 @@ const apiRequest = async (
   data: Record<string, unknown> | null = null
 ) => {
   try {
-    const url = `${API_URL}${endpoint}`;
+    const url = `${API_HOST}${endpoint}`;
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
 
     const headers: Record<string, string> = {
@@ -259,7 +257,7 @@ Text to analyze: ${chatResponse}`,
     };
 
     const response = await axios.post(
-      `${API_URL}/service/ai-agent/vertex`,
+      `${API_HOST}/service/ai-agent/vertex`,
       requestData,
       {
         headers: {

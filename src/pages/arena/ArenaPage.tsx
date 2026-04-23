@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Spin, Tag, Modal, notification } from 'antd';
 import { AUTH_TOKEN_KEY } from '../../services/AuthService';
+
+const API_HOST: string = import.meta.env.VITE_API_HOST;
 import {
   FaShip,
   FaAnchor,
@@ -2818,7 +2820,7 @@ const ArenaPage: React.FC = () => {
 
       console.log('Using auth token:', token.substring(0, 15) + '...');
 
-      const response = await fetch('https://api.simutrade.app/service/ai-agent/vertex', {
+      const response = await fetch(`${API_HOST}/service/ai-agent/vertex`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

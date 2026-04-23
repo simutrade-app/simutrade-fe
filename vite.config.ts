@@ -1,10 +1,14 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const API_HOST = env.VITE_API_HOST || 'https://api.simutrade.app';
+
+  return {
   plugins: [react(), tsconfigPaths()],
   resolve: {
     alias: {
@@ -14,7 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://api.simutrade.app',
+        target: API_HOST,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         configure: (proxy, _options) => {
@@ -34,7 +38,7 @@ export default defineConfig({
         },
       },
       '/service': {
-        target: 'https://api.simutrade.app',
+        target: API_HOST,
         changeOrigin: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
@@ -54,4 +58,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });

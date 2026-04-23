@@ -7,6 +7,8 @@ import AIThinkingProcess from '../../components/playground/AIThinkingProcess';
 import LegalProcessFlow from '../../components/playground/LegalProcessFlow';
 import { message } from 'antd';
 
+const API_HOST: string = import.meta.env.VITE_API_HOST;
+
 const { Title, Text } = Typography;
 const { Content } = Layout;
 
@@ -327,7 +329,7 @@ Be realistic about geography - ships need water routes, trucks need land connect
         try {
           const token = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('authToken') || 'demo-token';
           
-          const response = await fetch('https://api.simutrade.app/service/ai-agent/vertex', {
+          const response = await fetch(`${API_HOST}/service/ai-agent/vertex`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

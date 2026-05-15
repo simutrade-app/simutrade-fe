@@ -114,10 +114,10 @@ const Footer = React.forwardRef<HTMLElement, Record<string, unknown>>(
                 <address className="not-italic text-sm sm:text-base space-y-1.5 font-normal">
                   <p>
                     <a
-                      href="mailto:info@simutrade.app"
+                      href="mailto:info@simutrade.faizath.com"
                       className="text-white hover:text-secondary transition-opacity font-normal"
                     >
-                      info@simutrade.app
+                      info@simutrade.faizath.com
                     </a>
                   </p>
                   <p>

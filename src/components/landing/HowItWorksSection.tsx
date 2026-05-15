@@ -268,7 +268,7 @@ const HowItWorksSection: React.FC = () => {
                 onLoadedData={handleVideoLoaded}
               >
                 <source
-                  src="https://cdn.simutrade.app/sample.mp4"
+                  src="https://cdn.simutrade.faizath.com/sample.mp4"
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.
@@ -492,7 +492,7 @@ const HowItWorksSection: React.FC = () => {
                     style={{ aspectRatio: '16/9' }}
                     autoPlay
                     controls
-                    src="https://cdn.simutrade.app/sample.mp4"
+                    src="https://cdn.simutrade.faizath.com/sample.mp4"
                   >
                     Your browser does not support the video tag.
                   </video>

@@ -412,60 +412,29 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results }) => {
                    sessionStorage.getItem('authToken') ||
                    'demo-token';
       
-      console.log('Calling AI Agent with token:', token ? 'Present' : 'Missing');
-      
-      // Try both relative and absolute paths
-      const endpoints = [
-        `${API_HOST}/service/ai-agent/vertex`,
-        '/service/ai-agent/vertex',
-        '/api/ai-agent/vertex',
-        'http://localhost:3001/service/ai-agent/vertex',
-        'http://localhost:8080/service/ai-agent/vertex'
-      ];
-      
-      let lastError: Error | null = null;
-      
-      for (const endpoint of endpoints) {
-        try {
-          console.log('Trying endpoint:', endpoint);
-          
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({ query })
-          });
+      const endpoint = `${API_HOST}/service/ai-agent/vertex`;
 
-          console.log('Response status:', response.status);
-          
-          if (response.ok) {
-            const data: AIResponse = await response.json();
-            
-            if (data.error) {
-              throw new Error(data.error);
-            }
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ query })
+      });
 
-            return data.response || '';
-          } else if (response.status === 401) {
-            console.warn(`401 Unauthorized for ${endpoint}`);
-            lastError = new Error(`Unauthorized access to ${endpoint}`);
-            continue; // Try next endpoint
-          } else {
-            lastError = new Error(`HTTP error! status: ${response.status} for ${endpoint}`);
-            continue; // Try next endpoint
-          }
-        } catch (fetchError) {
-          console.warn(`Failed to fetch from ${endpoint}:`, fetchError);
-          lastError = fetchError as Error;
-          continue; // Try next endpoint
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      // If all endpoints failed, throw the last error
-      throw lastError || new Error('All endpoints failed');
+
+      const data: AIResponse = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data.response || '';
       
     } catch (error) {
       console.error('AI Agent Error:', error);
